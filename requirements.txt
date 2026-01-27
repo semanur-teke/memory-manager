@@ -1,0 +1,34 @@
+# Core dependencies
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Image processing
+Pillow>=10.0.0
+exifread>=3.0.0
+
+# Audio processing
+whisper>=1.1.0
+torch==2.10.0
+torchaudio==2.10.0
+
+# Embedding models
+transformers>=4.30.0
+sentence-transformers>=2.2.0
+open-clip-torch>=2.20.0
+
+# Vector search
+faiss-cpu>=1.7.4  # or faiss-gpu for GPU support
+
+# Clustering
+scikit-learn>=1.3.0
+
+# Database
+sqlalchemy>=2.0.0
+
+# Utilities
+python-dateutil>=2.8.0
+
+# Testing (optional)
+pytest>=7.4.0
+pytest-cov>=4.1.0
+

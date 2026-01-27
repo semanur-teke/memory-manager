@@ -1,0 +1,52 @@
+# encryption_manager.py
+
+import os
+from cryptography.fernet import Fernet
+from pathlib import Path
+
+class EncryptionManager:
+    """
+    Dosya ve veritabanı verilerini şifreleme/şifre çözme işlemlerini yönetir.
+    """
+    
+    def __init__(self, key_path: str = "secret.key"):
+        self.key_path = Path(key_path)
+        self.key = self._load_or_generate_key()
+        self.cipher = Fernet(self.key)
+
+    def _load_or_generate_key(self) -> bytes:
+        """Anahtarı yükler veya yoksa yeni bir tane oluşturur."""
+        if self.key_path.exists():
+            return self.key_path.read_bytes()
+        
+        key = Fernet.generate_key()
+        self.key_path.write_bytes(key)
+        return key
+
+    def encrypt_string(self, plain_text: str) -> str:
+        """Metin verisini (özet, transkript vb.) şifreler."""
+        if not plain_text:
+            return plain_text
+        return self.cipher.encrypt(plain_text.encode()).decode()
+
+    def decrypt_string(self, encrypted_text: str) -> str:
+        """Şifrelenmiş metnin şifresini çözer."""
+        if not encrypted_text:
+            return encrypted_text
+        return self.cipher.decrypt(encrypted_text.encode()).decode()
+
+    def encrypt_file(self, file_path: str):
+        """Diskteki bir dosyayı (fotoğraf, ses vb.) yerinde şifreler."""
+        path = Path(file_path)
+        if path.exists():
+            data = path.read_bytes()
+            encrypted_data = self.cipher.encrypt(data)
+            path.write_bytes(encrypted_data)
+
+    def decrypt_file(self, file_path: str) -> bytes:
+        """Şifreli dosyanın verisini okur ve şifresini çözer."""
+        path = Path(file_path)
+        if path.exists():
+            encrypted_data = path.read_bytes()
+            return self.cipher.decrypt(encrypted_data)
+        return b""
