@@ -1,0 +1,75 @@
+# --- Python Standart ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.manifest
+*.spec
+
+# --- Sanal Ortam (Virtual Environments) ---
+# Senin klasör yapındaki .venv ismine göre güncellendi
+.venv/
+venv/
+env/
+ENV/
+
+# --- Güvenlik ve Gizlilik (KRİTİK!) ---
+# Şifreleme anahtarları asla GitHub'a gitmemeli
+*.key
+secret.key
+.env
+
+# --- Veritabanı ve Arama Endeksleri ---
+# SQLite veritabanı ve Faiss endeksleri yerel kalmalı
+*.db
+*.db-journal
+*.faiss
+database/*.db
+
+# --- Veri Klasörleri ---
+# Ham ve işlenmiş veriler yerel diskte kalmalı
+data/raw/*
+data/processed/*
+data/encrypted/*
+# Klasör yapısını korumak için .gitkeep dosyalarına izin ver
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/encrypted/.gitkeep
+
+# --- AI Modelleri (Büyük dosyalar) ---
+# Whisper, CLIP ve SBERT modelleri çok büyük olduğu için yüklenmez
+models/**/*.bin
+models/**/*.pt
+models/**/*.pth
+models/**/*.onnx
+models/**/*.ckpt
+
+# --- Loglar ---
+# PrivacyManager ve sistem logları
+*.log
+privacy_audit.log
+
+# --- IDE ve İşletim Sistemi ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
