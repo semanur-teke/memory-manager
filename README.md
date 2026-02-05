@@ -6,24 +6,75 @@ Kişisel fotoğraflarınızı, notlarınızı ve ses kayıtlarınızı AI destek
 
 ```
 memory-manager/
+
 ├── data/                    # Kullanıcı verileri
-│   ├── raw/                # Ham fotoğraflar, sesler
-│   ├── processed/          # İşlenmiş metadata
-│   └── encrypted/          # Şifreli yedekler
-├── models/                 # AI modelleri
-│   ├── clip/
-│   ├── sbert/
-│   └── whisper/
-├── database/               # Veritabanı
-│   ├── metadata.db        # SQLite
-│   └── embeddings.faiss   # Faiss index
-├── src/
-│   ├── ingestion/         # Veri alma
-│   ├── embedding/         # Embedding üretme
-│   ├── clustering/        # Olay kümeleme
-│   ├── flashcards/        # Flashcard üretme
-│   └── ui/                # Kullanıcı arayüzü
-└── tests/
+
+│   ├── raw/                 # Ham fotoğraflar, sesler
+
+│   ├── processed/           # İşlenmiş metadata
+
+│   └── encrypted/           # Şifreli yedekler
+
+├── models/                  # AI modelleri (CLIP, SBERT, Whisper)
+
+├── database/                # Veritabanı
+
+│   ├── schema.py            # SQLite tablo tanımları
+
+│   └── __init__.py
+
+├── security/                # GÜVENLİK KATMANI (Kök Dizinde)
+
+│   ├── __init__.py
+
+│   ├── encryption_manager.py # Veri şifreleme/çözme
+
+│   └── security_manager.py   # İzin yönetimi ve gizlilik
+
+├── src/                     # UYGULAMA MANTIĞI
+
+│   ├── ingestion/           # Veri alma (Exif, Photo, Audio)
+
+│   │   ├── __init__.py
+
+│   │   ├── exif_extractor.py
+
+│   │   ├── photo_importer.py
+
+│   │   └── audio_processor.py
+
+│   ├── embedding/           # Vektör üretme ve yönetim
+
+│   │   ├── __init__.py
+
+│   │   ├── clip_embedder.py
+
+│   │   ├── sbert_embedder.py
+
+│   │   ├── multimodal_fuser.py # Az önce yazdığımız fuser
+
+│   │   └── faiss_manager.py
+
+│   ├── search/              # Arama sistemleri
+
+│   ├── clustering/          # Olay kümeleme
+
+│   ├── flashcards/          # Eğitim kartları
+
+│   └── ui/                  # Arayüz
+
+├── tests/                   # Test dosyaları
+
+│   ├── test_ai_engine.py    # 4/4 Geçen testimiz
+
+│   └── ...
+
+├── requirements.txt         # Bağımlılıklar
+
+├── README.md
+
+└── .gitignore
+ 
 ```
 
 ## Geliştirme Aşamaları
