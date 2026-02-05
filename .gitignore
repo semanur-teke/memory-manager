@@ -73,3 +73,7 @@ privacy_audit.log
 *~
 .DS_Store
 Thumbs.db
+
+# --- Diğer Geçici Dosyalar ---
+*.xlsx
+~$*.xlsx
