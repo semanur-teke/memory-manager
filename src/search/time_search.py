@@ -1,87 +1,100 @@
 """
 Zamana Göre Arama (Aşama 5.2)
-
 Tarih aralığına göre öğeleri filtreler.
 """
 
 from datetime import datetime, date
 from typing import List, Dict, Optional
-
+from sqlalchemy import extract, func
+from sqlalchemy.orm import Session
+from database.schema import Item  # Veritabanı modelin
 
 class TimeSearch:
     """
     Zaman bazlı arama yapar.
     """
     
-    def __init__(self, db_connection):
+    def __init__(self, db_connection: Session):
         """
         Args:
-            db_connection: Veritabanı bağlantısı
+            db_connection: SQLAlchemy veritabanı oturumu
         """
         self.db = db_connection
     
     def search_by_date_range(self, start_date: date, end_date: date) -> List[Dict]:
         """
-        Belirli bir tarih aralığındaki öğeleri bul.
-        
-        Args:
-            start_date: Başlangıç tarihi
-            end_date: Bitiş tarihi
-            
-        Returns:
-            [{'item_id': int, 'created_at': datetime, 'file_path': str}, ...]
+        Belirli bir tarih aralığındaki öğeleri bulur.
         """
-        pass
+        # created_at sütunu üzerinden BETWEEN sorgusu atıyoruz
+        items = self.db.query(Item).filter(
+            Item.created_at >= start_date,
+            Item.created_at <= end_date
+        ).order_by(Item.created_at.desc()).all()
+        
+        return [{'item_id': item.id, 'created_at': item.created_at, 'file_path': item.file_path} for item in items]
     
     def search_by_year(self, year: int) -> List[Dict]:
         """
-        Belirli bir yıldaki öğeleri bul.
-        
-        Args:
-            year: Yıl (örn: 2024)
-            
-        Returns:
-            Öğe listesi
+        Belirli bir yıldaki öğeleri bulur (Örn: 2025).
         """
-        pass
+        items = self.db.query(Item).filter(
+            extract('year', Item.created_at) == year
+        ).order_by(Item.created_at.asc()).all()
+        
+        return [{'item_id': item.id, 'created_at': item.created_at, 'file_path': item.file_path} for item in items]
     
     def search_by_month(self, year: int, month: int) -> List[Dict]:
         """
-        Belirli bir ay/yıldaki öğeleri bul.
-        
-        Args:
-            year: Yıl
-            month: Ay (1-12)
-            
-        Returns:
-            Öğe listesi
+        Belirli bir ay ve yıldaki öğeleri bulur (Örn: Haziran 2025).
         """
-        pass
+        items = self.db.query(Item).filter(
+            extract('year', Item.created_at) == year,
+            extract('month', Item.created_at) == month
+        ).order_by(Item.created_at.asc()).all()
+        
+        return [{'item_id': item.id, 'created_at': item.created_at, 'file_path': item.file_path} for item in items]
     
     def search_by_day(self, target_date: date) -> List[Dict]:
         """
-        Belirli bir gündeki öğeleri bul.
-        
-        Args:
-            target_date: Tarih
-            
-        Returns:
-            Öğe listesi
+        Tam olarak belirli bir gündeki (Yıl-Ay-Gün) öğeleri bulur.
         """
-        pass
+        # func.date kullanarak timestamp verisini sadece tarih kısmıyla kıyaslıyoruz
+        items = self.db.query(Item).filter(
+            func.date(Item.created_at) == target_date
+        ).all()
+        
+        return [{'item_id': item.id, 'created_at': item.created_at, 'file_path': item.file_path} for item in items]
     
     def get_timeline_stats(self) -> Dict:
         """
-        Zaman çizelgesi istatistiklerini döndür.
-        
-        Returns:
-            {
-                'earliest_date': datetime,
-                'latest_date': datetime,
-                'total_items': int,
-                'items_by_year': {year: count},
-                'items_by_month': {(year, month): count}
-            }
+        Zaman çizelgesi istatistiklerini döndürür.
         """
-        pass
+        # Toplam öğe sayısı
+        total_items = self.db.query(Item).count()
+        if total_items == 0:
+            return {}
 
+        # En eski ve en yeni tarihler
+        earliest = self.db.query(func.min(Item.created_at)).scalar()
+        latest = self.db.query(func.max(Item.created_at)).scalar()
+
+        # Yıllara göre dağılım
+        yearly_counts = self.db.query(
+            extract('year', Item.created_at).label('year'),
+            func.count(Item.id)
+        ).group_by('year').all()
+
+        # Aylara göre dağılım
+        monthly_counts = self.db.query(
+            extract('year', Item.created_at).label('year'),
+            extract('month', Item.created_at).label('month'),
+            func.count(Item.id)
+        ).group_by('year', 'month').all()
+
+        return {
+            'earliest_date': earliest,
+            'latest_date': latest,
+            'total_items': total_items,
+            'items_by_year': {int(y): c for y, c in yearly_counts},
+            'items_by_month': {(int(y), int(m)): c for y, m, c in monthly_counts}
+        }
