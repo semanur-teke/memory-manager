@@ -86,7 +86,7 @@ class SearchEngine:
                     all_results.append(item)
 
         # Birden fazla filtre varsa, kesişimi bul (item_id bazında)
-        active_filters = [k for k, v in filters_applied.items() if v]
+        active_filters = [key for key, v in filters_applied.items() if v]
         if len(active_filters) > 1:
             all_results = self._intersect_results(all_results, active_filters)
 

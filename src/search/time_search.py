@@ -27,32 +27,32 @@ class TimeSearch:
         """
         # created_at sütunu üzerinden BETWEEN sorgusu atıyoruz
         items = self.db.query(Item).filter(
-            Item.created_at >= start_date,
-            Item.created_at <= end_date
-        ).order_by(Item.created_at.desc()).all()
-        
-        return [{'item_id': item.id, 'created_at': item.created_at, 'file_path': item.file_path} for item in items]
+            Item.creation_datetime >= start_date,
+            Item.creation_datetime <= end_date
+        ).order_by(Item.creation_datetime.desc()).all()
+
+        return [{'item_id': item.item_id, 'created_at': item.creation_datetime, 'file_path': item.file_path} for item in items]
     
     def search_by_year(self, year: int) -> List[Dict]:
         """
         Belirli bir yıldaki öğeleri bulur (Örn: 2025).
         """
         items = self.db.query(Item).filter(
-            extract('year', Item.created_at) == year
-        ).order_by(Item.created_at.asc()).all()
-        
-        return [{'item_id': item.id, 'created_at': item.created_at, 'file_path': item.file_path} for item in items]
+            extract('year', Item.creation_datetime) == year
+        ).order_by(Item.creation_datetime.asc()).all()
+
+        return [{'item_id': item.item_id, 'created_at': item.creation_datetime, 'file_path': item.file_path} for item in items]
     
     def search_by_month(self, year: int, month: int) -> List[Dict]:
         """
         Belirli bir ay ve yıldaki öğeleri bulur (Örn: Haziran 2025).
         """
         items = self.db.query(Item).filter(
-            extract('year', Item.created_at) == year,
-            extract('month', Item.created_at) == month
-        ).order_by(Item.created_at.asc()).all()
-        
-        return [{'item_id': item.id, 'created_at': item.created_at, 'file_path': item.file_path} for item in items]
+            extract('year', Item.creation_datetime) == year,
+            extract('month', Item.creation_datetime) == month
+        ).order_by(Item.creation_datetime.asc()).all()
+
+        return [{'item_id': item.item_id, 'created_at': item.creation_datetime, 'file_path': item.file_path} for item in items]
     
     def search_by_day(self, target_date: date) -> List[Dict]:
         """
@@ -60,10 +60,10 @@ class TimeSearch:
         """
         # func.date kullanarak timestamp verisini sadece tarih kısmıyla kıyaslıyoruz
         items = self.db.query(Item).filter(
-            func.date(Item.created_at) == target_date
+            func.date(Item.creation_datetime) == target_date
         ).all()
-        
-        return [{'item_id': item.id, 'created_at': item.created_at, 'file_path': item.file_path} for item in items]
+
+        return [{'item_id': item.item_id, 'created_at': item.creation_datetime, 'file_path': item.file_path} for item in items]
     
     def get_timeline_stats(self) -> Dict:
         """
@@ -75,20 +75,20 @@ class TimeSearch:
             return {}
 
         # En eski ve en yeni tarihler
-        earliest = self.db.query(func.min(Item.created_at)).scalar()
-        latest = self.db.query(func.max(Item.created_at)).scalar()
+        earliest = self.db.query(func.min(Item.creation_datetime)).scalar()
+        latest = self.db.query(func.max(Item.creation_datetime)).scalar()
 
         # Yıllara göre dağılım
         yearly_counts = self.db.query(
-            extract('year', Item.created_at).label('year'),
-            func.count(Item.id)
+            extract('year', Item.creation_datetime).label('year'),
+            func.count(Item.item_id)
         ).group_by('year').all()
 
         # Aylara göre dağılım
         monthly_counts = self.db.query(
-            extract('year', Item.created_at).label('year'),
-            extract('month', Item.created_at).label('month'),
-            func.count(Item.id)
+            extract('year', Item.creation_datetime).label('year'),
+            extract('month', Item.creation_datetime).label('month'),
+            func.count(Item.item_id)
         ).group_by('year', 'month').all()
 
         return {

@@ -32,7 +32,7 @@ class LocationSearch:
             dist = self.calculate_distance(latitude, longitude, item.latitude, item.longitude)
             if dist <= radius_km:
                 results.append({
-                    'item_id': item.id,
+                    'item_id': item.item_id,
                     'distance_km': round(dist, 2),
                     'location': (item.latitude, item.longitude)
                 })
@@ -46,11 +46,11 @@ class LocationSearch:
             # Şehri buluyoruz
             location = self.geocoder.geocode(city_name)
             if location:
-                print(f"Arama merkezi: {location.address} ({location.latitude}, {location.longitude})")
+                print(f"Arama merkezi: ({location.latitude}, {location.longitude})")
                 return self.search_by_location(location.latitude, location.longitude, radius_km)
             else:
-                print(f"HATA: '{city_name}' konumu dünya haritasında bulunamadı.")
+                print(f"HATA: '{city_name}' konumu bulunamadi.")
                 return []
         except Exception as e:
-            print(f"Geocoding hatası: {e}")
+            print(f"Geocoding hatasi: {e}")
             return []
