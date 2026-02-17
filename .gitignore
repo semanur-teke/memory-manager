@@ -76,6 +76,12 @@ Thumbs.db
 
 # --- Çalışma Dokümanları ---
 PLAN.md
+TEAM_B_TEST_GUIDE.md
+
+# --- Test Çıktıları ---
+test_results.xml
+test_results.txt
+test_results.log
 
 # --- Diğer Geçici Dosyalar ---
 *.xlsx

@@ -1,0 +1,11 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Proje kökünü Python path'e ekle (import sorunlarını çözer)
+pythonpath = ["."]
+
+# -v: detaylı çıktı, --tb=short: kısa hata mesajları
+addopts = "-v --tb=short"
