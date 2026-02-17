@@ -1,125 +1,129 @@
-# Kişisel Hafıza Yöneticisi (Memory Palace)
+# Kisisel Hafiza Yoneticisi (Memory Manager)
 
-Kişisel fotoğraflarınızı, notlarınızı ve ses kayıtlarınızı AI destekli bir sistemle organize edin, arayın ve hatırlayın.
+Kisisel fotograflarinizi, notlarinizi ve ses kayitlarinizi AI destekli bir sistemle organize edin, arayin ve hatirlatin.
 
-## Proje Yapısı
+## Proje Yapisi
 
 ```
 memory-manager/
-
-├── data/                    # Kullanıcı verileri
-
-│   ├── raw/                 # Ham fotoğraflar, sesler
-
-│   ├── processed/           # İşlenmiş metadata
-
-│   └── encrypted/           # Şifreli yedekler
-
-├── models/                  # AI modelleri (CLIP, SBERT, Whisper)
-
-├── database/                # Veritabanı
-
-│   ├── schema.py            # SQLite tablo tanımları
-
-│   └── __init__.py
-
-├── security/                # GÜVENLİK KATMANI (Kök Dizinde)
-
+├── data/                        # Kullanici verileri
+│   ├── raw/                     # Ham fotograflar, sesler
+│   ├── processed/               # Islenmis metadata
+│   └── encrypted/               # Sifreli yedekler
+├── models/                      # AI modelleri
+│   ├── clip/                    # CLIP model dosyalari
+│   ├── sbert/                   # SBERT model dosyalari
+│   └── whisper/                 # Whisper model dosyalari
+├── database/                    # Veritabani
 │   ├── __init__.py
-
-│   ├── encryption_manager.py # Veri şifreleme/çözme
-
-│   └── security_manager.py   # İzin yönetimi ve gizlilik
-
-├── src/                     # UYGULAMA MANTIĞI
-
-│   ├── ingestion/           # Veri alma (Exif, Photo, Audio)
-
+│   └── schema.py                # SQLAlchemy ORM modelleri
+├── security/                    # Guvenlik Katmani
+│   ├── encryption_manager.py    # Fernet sifreleme/cozme
+│   └── security_manager.py      # Riza yonetimi ve denetim logu
+├── src/                         # Uygulama Mantigi
+│   ├── ingestion/               # Veri alma
 │   │   ├── __init__.py
-
-│   │   ├── exif_extractor.py
-
-│   │   ├── photo_importer.py
-
-│   │   └── audio_processor.py
-
-│   ├── embedding/           # Vektör üretme ve yönetim
-
+│   │   ├── exif_extractor.py    # EXIF metadata cikarma
+│   │   ├── photo_importer.py    # Toplu fotograf ice aktarma
+│   │   ├── image_processer.py   # Yon duzeltme ve boyutlandirma
+│   │   └── audio_processor.py   # Whisper ile transkript
+│   ├── embedding/               # Vektor uretme
 │   │   ├── __init__.py
-
-│   │   ├── clip_embedder.py
-
-│   │   ├── sbert_embedder.py
-
-│   │   ├── multimodal_fuser.py # Az önce yazdığımız fuser
-
-│   │   └── faiss_manager.py
-
-│   ├── search/              # Arama sistemleri
-
-│   ├── clustering/          # Olay kümeleme
-
-│   ├── flashcards/          # Eğitim kartları
-
-│   └── ui/                  # Arayüz
-
-├── tests/                   # Test dosyaları
-
-│   ├── test_ai_engine.py    # 4/4 Geçen testimiz
-
-│   └── ...
-
-├── requirements.txt         # Bağımlılıklar
-
+│   │   ├── clip_embedder.py     # CLIP gorsel embedding (512D)
+│   │   ├── sbert_embedder.py    # SBERT metin embedding (384D)
+│   │   ├── multimodal_fuser.py  # Gorsel+metin birlestirme (896D)
+│   │   └── faiss_manager.py     # FAISS vektor arama indeksi
+│   ├── search/                  # Arama sistemleri
+│   │   ├── __init__.py
+│   │   ├── text_search.py       # Semantik metin aramasi
+│   │   ├── time_search.py       # Tarih bazli arama
+│   │   ├── location_search.py   # Konum bazli arama (Geopy)
+│   │   └── search_engine.py     # Birlesik arama koordinatoru
+│   ├── clustering/              # Olay kumeleme (iskelet)
+│   │   ├── __init__.py
+│   │   ├── dbscan_clusterer.py
+│   │   ├── refinement_clusterer.py
+│   │   ├── cover_photo_selector.py
+│   │   └── event_clusterer.py
+│   ├── flashcards/              # Egitim kartlari (bos)
+│   └── ui/                      # Kullanici arayuzu (bos)
+├── tests/                       # Test dosyalari
+│   ├── __init__.py
+│   ├── test_clustering.py
+│   ├── test_embedding.py
+│   └── test_photo_importer.py
+├── requirements.txt
+├── PROJECT_STRUCTURE.md
 ├── README.md
-
 └── .gitignore
- 
 ```
 
-## Geliştirme Aşamaları
+## Guvenlik Mimarisi
 
-### Aşama 0: Proje Kurulumu ✅
-- Proje klasör yapısı oluşturuldu
-- Gerekli kütüphaneler belirlendi
+Bu proje "privacy-first" yaklasimi benimser. Guvenlik bir ozellik degil, projenin karakteridir.
 
-### Aşama 1: Veritabanı Tasarımı 🔄
-- SQLite veritabanı şeması tasarlandı
-- Items, Events, Flashcards, ReviewLog tabloları
+- **Sifreleme**: Tum dosyalar Fernet (AES-128-CBC) ile diskte sifrelenir. Transkriptler DB'ye sifreli yazilir.
+- **Riza Yonetimi**: Her Item icin `has_consent` bayragi. Rizasi olmayan veriler arama sonuclarinda goruntulenmez.
+- **Guvenli Silme**: Dosyalar silinmeden once uzerine rastgele veri yazilir (`secure_delete`).
+- **Denetim Logu**: Tum gizlilik islemleri `privacy_audit.log` dosyasina kaydedilir.
+- **Anahtar Korumasi**: `secret.key` dosyasi OS seviyesinde sadece sahip tarafindan okunabilir (chmod 600).
 
-### Aşama 2: Fotoğraf İçe Aktarma 🔄
-- EXIF metadata çıkarma
-- Toplu içe aktarma
+## Gelistirme Asamalari
 
-### Aşama 3: Ses Kayıtlarını İşleme 🔄
-- Whisper ile transkript oluşturma
+### Asama 1: Proje Kurulumu ✅
+- Proje klasor yapisi, `.gitignore`, `requirements.txt`
 
-### Aşama 4: Embedding Üretme 🔄
-- CLIP ile fotoğraf embedding'leri
-- SBERT ile metin embedding'leri
-- Faiss index entegrasyonu
+### Asama 2: Gizlilik & Sifreleme (Temel Katman) ✅
+- `encryption_manager.py`: Fernet sifreleme/cozme (string + dosya)
+- `security_manager.py`: Riza kontrolu, guvenli silme, denetim logu
 
-### Aşama 5: Arama Sistemi 🔄
-- Metin ile arama
-- Zamana göre arama
-- Konuma göre arama
+### Asama 3: Veritabani & Sema ✅
+- `schema.py`: Item, Event, Flashcard, ReviewLog ORM modelleri
+- `has_consent` ve `is_rotated` bayraklari
+- `sessionmaker` ile dogru session yonetimi
 
-### Aşama 6: Olay Kümeleme 🔄
-- DBSCAN ile zaman/konum bazlı kümeleme
-- Embedding bazlı ince ayar
-- Temsilci fotoğraf seçimi
+### Asama 4: Fotograf Ice Aktarma & EXIF ✅
+- `exif_extractor.py`: SHA256 hash, tarih, GPS, kamera bilgisi
+- `image_processer.py`: EXIF yon duzeltme, boyut optimizasyonu
+- `photo_importer.py`: Toplu import, duplicate kontrolu, sifreleme entegrasyonu
+
+### Asama 5: Ses Isleme ✅
+- `audio_processor.py`: Whisper transkript, sifreli kayit, batch isleme
+
+### Asama 6: Embedding & Multimodal Fusion ✅
+- `clip_embedder.py`: CLIP ViT-B-32 (512D), sifreli dosya destegi
+- `sbert_embedder.py`: all-MiniLM-L6-v2 (384D)
+- `multimodal_fuser.py`: Agirlikli birlestirme (896D)
+- `faiss_manager.py`: FlatL2/HNSW indeks, ID mapping
+
+### Asama 7: Arama Motoru ✅
+- `text_search.py`: CLIP/SBERT ile semantik arama, consent filtresi, transkript decrypt
+- `time_search.py`: Tarih araligi, yil, ay, gun bazli arama, consent filtresi
+- `location_search.py`: Geopy jeodezik mesafe, sehir adi ile arama, consent filtresi
+- `search_engine.py`: Tum filtreleri birlestiren kesisim mantigi
+
+### Asama 8: Olay Kumeleme (sirada)
+- DBSCAN ile zaman/konum kumeleme
+- Embedding bazli ince ayar
+- Kapak fotografi secimi
+- Event olusturma ve DB kaydi
+
+### Asama 9: Ozetleme
+### Asama 10: Flashcard & SM-2
+### Asama 11: Zaman Cizelgesi
+### Asama 12: Kullanici Arayuzu (Streamlit)
+### Asama 13: Test Suite
+### Asama 14: Yedekleme & Disa Aktarma
+### Asama 15: Performans Optimizasyonu
 
 ## Kurulum
 
 ```bash
+python -m venv .venv
+.venv\Scripts\activate        # Windows
 pip install -r requirements.txt
 ```
-
-## Kullanım
-
-(İleride eklenecek)
 
 ## Lisans
 
 MIT License
-
