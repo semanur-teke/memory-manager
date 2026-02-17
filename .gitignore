@@ -74,6 +74,9 @@ privacy_audit.log
 .DS_Store
 Thumbs.db
 
+# --- Çalışma Dokümanları ---
+PLAN.md
+
 # --- Diğer Geçici Dosyalar ---
 *.xlsx
 ~$*.xlsx

@@ -4,13 +4,14 @@ import os
 import stat
 from cryptography.fernet import Fernet
 from pathlib import Path
+from config import Config
 
 class EncryptionManager:
     """
     Dosya ve veritabanı verilerini şifreleme/şifre çözme işlemlerini yönetir.
     """
-    
-    def __init__(self, key_path: str = "secret.key"):
+
+    def __init__(self, key_path: str = Config.SECRET_KEY_PATH):
         self.key_path = Path(key_path)
         self.key = self._load_or_generate_key()
         self.cipher = Fernet(self.key)

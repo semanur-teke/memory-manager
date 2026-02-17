@@ -9,6 +9,7 @@ from datetime import date
 from .text_search import TextSearch
 from .time_search import TimeSearch
 from .location_search import LocationSearch
+from config import Config
 
 
 class SearchEngine:
@@ -30,7 +31,8 @@ class SearchEngine:
 
     def search(self, query: str = None, start_date: Optional[date] = None,
                end_date: Optional[date] = None, location: Optional[tuple] = None,
-               radius_km: float = 5.0, k: int = 10) -> Dict:
+               radius_km: float = Config.DEFAULT_SEARCH_RADIUS_KM,
+               k: int = Config.DEFAULT_SEARCH_K) -> Dict:
         """
         Kombine arama yap.
 
@@ -153,8 +155,8 @@ class SearchEngine:
         month = filters.get('month')
         location = filters.get('location')
         city = filters.get('city')
-        radius_km = filters.get('radius_km', 5.0)
-        k = filters.get('k', 10)
+        radius_km = filters.get('radius_km', Config.DEFAULT_SEARCH_RADIUS_KM)
+        k = filters.get('k', Config.DEFAULT_SEARCH_K)
 
         # Yıl/ay verilmişse tarih aralığına çevir
         if year and not (start_date and end_date):

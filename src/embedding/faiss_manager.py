@@ -1,8 +1,12 @@
+import logging
 import faiss
 import numpy as np
 import pickle
 from pathlib import Path
 from typing import List, Optional, Tuple
+from config import Config
+
+logger = logging.getLogger(__name__)
 
 class FaissManager:
     """
@@ -10,11 +14,13 @@ class FaissManager:
     araması yaparak en yakın sonuçları (Item ID bazlı) döndürür.
     """
     
-    def __init__(self, index_path: str, dimension: int, index_type: str = "flat"):
+    def __init__(self, index_path: str, dimension: int, index_type: str = "flat",
+                 hnsw_neighbors: int = Config.HNSW_NEIGHBORS):
         # Index dosyasının yolu (Örn: database/vector_index.faiss)
         self.index_path = Path(index_path)
         self.dimension = dimension
         self.index_type = index_type.lower()
+        self.hnsw_neighbors = hnsw_neighbors
         self.index = None
         # Faiss ID -> Database Item ID eşleşmesi
         self.id_to_item_id = {} 
@@ -30,13 +36,13 @@ class FaissManager:
     def create_index(self):
         """Yeni bir boş Faiss index oluşturur."""
         if self.index_type == "hnsw":
-            # HNSW: Büyük veri setlerinde çok hızlı arama sağlar. 32 komşuluk bağlantısıdır.
-            self.index = faiss.IndexHNSWFlat(self.dimension, 32)
-            print(f"HNSW Faiss index oluşturuldu (Boyut: {self.dimension})")
+            # HNSW: Büyük veri setlerinde çok hızlı arama sağlar.
+            self.index = faiss.IndexHNSWFlat(self.dimension, self.hnsw_neighbors)
+            logger.info(f"HNSW Faiss index oluşturuldu (Boyut: {self.dimension})")
         else:
             # FlatL2: En hassas, kaba kuvvet arama (Küçük veri setleri için ideal).
             self.index = faiss.IndexFlatL2(self.dimension)
-            print(f"FlatL2 Faiss index oluşturuldu (Boyut: {self.dimension})")
+            logger.info(f"FlatL2 Faiss index oluşturuldu (Boyut: {self.dimension})")
 
     def load_index(self):
         """Index'i ve ID haritasını yükler."""
@@ -46,9 +52,9 @@ class FaissManager:
             if map_path.exists():
                 with open(map_path, 'rb') as f:
                     self.id_to_item_id = pickle.load(f)
-            print("Mevcut Faiss index başarıyla yüklendi.")
+            logger.info("Mevcut Faiss index başarıyla yüklendi.")
         except Exception as e:
-            print(f"Yükleme hatası: {e}. Yeni index açılıyor.")
+            logger.warning(f"Yükleme hatası: {e}. Yeni index açılıyor.")
             self.create_index()
 
     def save_index(self):

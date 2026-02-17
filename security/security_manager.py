@@ -7,12 +7,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from database.schema import Item  # Güncellediğimiz şemadan Item modelini alıyoruz
 
-# Audit log (Denetim Kaydı) yapılandırması 
-logging.basicConfig(
-    filename='privacy_audit.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logger = logging.getLogger(__name__)
 
 class PrivacyManager:
     """
@@ -75,8 +70,8 @@ class PrivacyManager:
         """
         message = f"[{action}] {details}"
         if level == "warning":
-            logging.warning(message)
+            logger.warning(message)
         elif level == "error":
-            logging.error(message)
+            logger.error(message)
         else:
-            logging.info(message)
+            logger.info(message)

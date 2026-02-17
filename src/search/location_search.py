@@ -2,17 +2,21 @@
 Konuma Göre Arama (Aşama 5.3) - Geopy Entegrasyonu
 """
 
+import logging
 from typing import List, Dict, Optional
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
 from sqlalchemy.orm import Session
 from database.schema import Item
+from config import Config
+
+logger = logging.getLogger(__name__)
 
 class LocationSearch:
     def __init__(self, db_connection: Session):
         self.db = db_connection
         # User-agent kısmına kendi proje adını yazman önemli (OpenStreetMap kuralı)
-        self.geocoder = Nominatim(user_agent="MemoryManager_App_v1")
+        self.geocoder = Nominatim(user_agent=Config.GEOCODER_USER_AGENT)
 
     def calculate_distance(self, lat1: float, lon1: float, 
                           lat2: float, lon2: float) -> float:
@@ -23,7 +27,7 @@ class LocationSearch:
         return geodesic((lat1, lon1), (lat2, lon2)).kilometers
 
     def search_by_location(self, latitude: float, longitude: float, 
-                          radius_km: float = 5.0) -> List[Dict]:
+                          radius_km: float = Config.DEFAULT_SEARCH_RADIUS_KM) -> List[Dict]:
         """Koordinat çevresindeki öğeleri getirir."""
         items = self.db.query(Item).filter(
             Item.latitude.isnot(None),
@@ -41,7 +45,7 @@ class LocationSearch:
                 })
         return sorted(results, key=lambda x: x['distance_km'])
 
-    def search_by_city(self, city_name: str, radius_km: float = 20.0) -> List[Dict]:
+    def search_by_city(self, city_name: str, radius_km: float = Config.CITY_SEARCH_RADIUS_KM) -> List[Dict]:
         """
         Geopy kullanarak şehir adını koordinata çevirir ve arama yapar.
         """
@@ -49,11 +53,11 @@ class LocationSearch:
             # Şehri buluyoruz
             location = self.geocoder.geocode(city_name)
             if location:
-                print(f"Arama merkezi: ({location.latitude}, {location.longitude})")
+                logger.info(f"Arama merkezi: ({location.latitude}, {location.longitude})")
                 return self.search_by_location(location.latitude, location.longitude, radius_km)
             else:
-                print(f"HATA: '{city_name}' konumu bulunamadi.")
+                logger.warning(f"'{city_name}' konumu bulunamadi.")
                 return []
         except Exception as e:
-            print(f"Geocoding hatasi: {e}")
+            logger.error(f"Geocoding hatasi: {e}")
             return []

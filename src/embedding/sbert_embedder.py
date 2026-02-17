@@ -1,15 +1,21 @@
+import logging
 from typing import List, Optional, Union
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import torch
+from config import Config
+
+logger = logging.getLogger(__name__)
 
 class SBERTEmbedder:
     """
     Metinleri (transkript, not vb.) anlamsal vektörlere dönüştüren motor.
     """
     
-    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
+    def __init__(self, model_name: str = Config.SBERT_MODEL_NAME,
+                 batch_size: int = Config.SBERT_BATCH_SIZE):
         self.model_name = model_name
+        self.batch_size = batch_size
         # Önce cihazı belirle (Hata almamak için)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = None  # Lazy loading: Sadece ihtiyaç duyulduğunda yüklenir.
@@ -17,7 +23,7 @@ class SBERTEmbedder:
     def _load_model(self):
         """Modeli belleğe yükler. Sadece bir kez çalışır."""
         if self.model is None:
-            print(f"SBERT modeli yükleniyor: {self.model_name} ({self.device})...")
+            logger.info(f"SBERT modeli yükleniyor: {self.model_name} ({self.device})...")
             self.model = SentenceTransformer(self.model_name, device=self.device)
 
     def encode_text(self, text: str) -> Optional[np.ndarray]:
@@ -39,7 +45,7 @@ class SBERTEmbedder:
             )
             return embedding.astype('float32')
         except Exception as e:
-            print(f"Hata: Metin vektöre çevrilemedi -> {e}")
+            logger.error(f"Metin vektöre çevrilemedi -> {e}")
             return None
 
     def encode_batch(self, texts: List[str]) -> np.ndarray:
@@ -54,14 +60,14 @@ class SBERTEmbedder:
         try:
             embeddings = self.model.encode(
                 texts,
-                batch_size=32,
+                batch_size=self.batch_size,
                 show_progress_bar=True,
                 convert_to_numpy=True,
                 normalize_embeddings=True
             )
             return embeddings.astype('float32')
         except Exception as e:
-            print(f"Hata: Toplu işlem başarısız -> {e}")
+            logger.error(f"Toplu işlem başarısız -> {e}")
             return np.array([], dtype='float32')
 
     def get_dimension(self) -> int:

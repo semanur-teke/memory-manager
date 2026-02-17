@@ -1,9 +1,13 @@
 # database/schema.py
 
+import logging
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column, Session, sessionmaker
+from config import Config
+
+logger = logging.getLogger(__name__)
 
 # 1. Temel Sınıfı Oluşturma
 Base = declarative_base()
@@ -108,14 +112,16 @@ class Item(Base):
 
 # ----------------- DB Yönetimi -----------------
 class DatabaseSchema:
-    def __init__(self, db_url: str = 'sqlite:///./metadata.db'):
+    def __init__(self, db_url: str = Config.DATABASE_URL):
         self.engine = create_engine(db_url)
         self.SessionLocal = sessionmaker(bind=self.engine)
 
     def create_all_tables(self):
         Base.metadata.create_all(self.engine)
-        print("Veritabanı şeması başarıyla güncellendi.")
+        logger.info("Veritabanı şeması başarıyla güncellendi.")
 
 if __name__ == '__main__':
+    from config import setup_logging
+    setup_logging()
     schema_manager = DatabaseSchema()
     schema_manager.create_all_tables()

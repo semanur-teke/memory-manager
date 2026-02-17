@@ -1,12 +1,16 @@
+import logging
 from PIL import Image, ImageOps
 from pathlib import Path
+from config import Config
+
+logger = logging.getLogger(__name__)
 
 class ImageProcessor:
     """
     Fotoğrafların yönünü düzeltir ve boyutlarını optimize eder.
     """
     
-    def __init__(self, max_size: int = 2000):
+    def __init__(self, max_size: int = Config.IMAGE_MAX_SIZE):
         self.max_size = max_size  # Maksimum genişlik veya yükseklik
 
     def fix_orientation(self, img: Image.Image) -> Image.Image:
@@ -41,5 +45,5 @@ class ImageProcessor:
                 img.save(image_path, quality=95)
                 return True
         except Exception as e:
-            print(f"İşlem hatası ({image_path}): {e}")
+            logger.error(f"İşlem hatası ({image_path}): {e}")
             return False

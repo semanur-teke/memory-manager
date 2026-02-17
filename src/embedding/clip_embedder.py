@@ -1,4 +1,5 @@
 import io
+import logging
 from pathlib import Path
 from typing import List, Optional, Union
 import numpy as np
@@ -6,6 +7,9 @@ from PIL import Image
 from sentence_transformers import SentenceTransformer
 import torch
 from security.encryption_manager import EncryptionManager
+from config import Config
+
+logger = logging.getLogger(__name__)
 
 class CLIPEmbedder:
     """
@@ -13,14 +17,18 @@ class CLIPEmbedder:
     Fotoğrafları anlamsal sayılara (512 boyutlu vektörler) dönüştürür.
     """
     
-    def __init__(self, model_name: str = "clip-ViT-B-32", encryption_manager: EncryptionManager = None):
+    def __init__(self, model_name: str = Config.CLIP_MODEL_NAME,
+                 encryption_manager: EncryptionManager = None,
+                 batch_size: int = Config.CLIP_BATCH_SIZE):
         """
         Args:
             model_name: CLIP model adı (512 boyut için ViT-B-32 idealdir)
             encryption_manager: Şifreli dosyaları çözmek için
+            batch_size: Toplu işlem boyutu
         """
         self.model_name = model_name
         self.model = None
+        self.batch_size = batch_size
         self.encryptor = encryption_manager or EncryptionManager()
         # Cihazı belirle: GPU varsa CUDA, yoksa CPU
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -28,7 +36,7 @@ class CLIPEmbedder:
     def load_model(self):
         """CLIP modelini ihtiyaç duyulduğunda belleğe yükler."""
         if self.model is None:
-            print(f"CLIP modeli yükleniyor: {self.model_name} ({self.device})...")
+            logger.info(f"CLIP modeli yükleniyor: {self.model_name} ({self.device})...")
             # SentenceTransformer, görsel ve metinsel CLIP işlemlerini tek çatı altında toplar.
             self.model = SentenceTransformer(self.model_name, device=self.device)
     
@@ -68,7 +76,7 @@ class CLIPEmbedder:
             )
             return embedding.astype('float32')
         except Exception as e:
-            print(f"Hata: Fotoğraf vektöre çevrilemedi ({image_path.name}) -> {e}")
+            logger.error(f"Fotoğraf vektöre çevrilemedi ({image_path.name}) -> {e}")
             return None
     
     def encode_images_batch(self, image_paths: List[Path]) -> np.ndarray:
@@ -84,14 +92,14 @@ class CLIPEmbedder:
             images = [img for p in image_paths if p.exists() for img in [self._open_image(p)] if img is not None]
             embeddings = self.model.encode(
                 images,
-                batch_size=32,
+                batch_size=self.batch_size,
                 show_progress_bar=True,
                 convert_to_numpy=True,
                 normalize_embeddings=True
             )
             return embeddings.astype('float32')
         except Exception as e:
-            print(f"Hata: Toplu fotoğraf işleme başarısız -> {e}")
+            logger.error(f"Toplu fotoğraf işleme başarısız -> {e}")
             return np.array([], dtype='float32')
     
     def encode_text(self, text: str) -> Optional[np.ndarray]:
@@ -113,7 +121,7 @@ class CLIPEmbedder:
             )
             return embedding.astype('float32')
         except Exception as e:
-            print(f"Hata: Metin vektöre çevrilemedi -> {e}")
+            logger.error(f"Metin vektöre çevrilemedi -> {e}")
             return None
     
     def get_embedding_dimension(self) -> int:

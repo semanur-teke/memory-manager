@@ -5,9 +5,10 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 # 1. Veritabanı ve Güvenlik Modülleri (Kök dizinden)
-from database.schema import Item 
+from database.schema import Item
 from security.encryption_manager import EncryptionManager
 from security.security_manager import PrivacyManager
+from config import Config
 
 # 2. Ingestion Modülleri (Aynı klasörde oldukları için bağıl import)
 from .exif_extractor import EXIFExtractor 
@@ -24,7 +25,7 @@ class PhotoImporter:
         self.processor = ImageProcessor()
         self.privacy = PrivacyManager(db_session)
         self.encryption = EncryptionManager()
-        self.supported_formats = {".jpg", ".jpeg", ".png", ".heic"}
+        self.supported_formats = Config.SUPPORTED_IMAGE_FORMATS
 
     def find_image_files(self, folder_path: Path, recursive: bool = True) -> List[Path]:
         """Klasördeki desteklenen görüntü dosyalarını bulur[cite: 24]."""
