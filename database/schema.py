@@ -3,7 +3,7 @@
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
-from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column, Session
+from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column, Session, sessionmaker
 
 # 1. Temel Sınıfı Oluşturma
 Base = declarative_base()
@@ -110,7 +110,7 @@ class Item(Base):
 class DatabaseSchema:
     def __init__(self, db_url: str = 'sqlite:///./metadata.db'):
         self.engine = create_engine(db_url)
-        self.SessionLocal = Session(bind=self.engine) 
+        self.SessionLocal = sessionmaker(bind=self.engine)
 
     def create_all_tables(self):
         Base.metadata.create_all(self.engine)

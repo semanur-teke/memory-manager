@@ -25,7 +25,10 @@ class LocationSearch:
     def search_by_location(self, latitude: float, longitude: float, 
                           radius_km: float = 5.0) -> List[Dict]:
         """Koordinat çevresindeki öğeleri getirir."""
-        items = self.db.query(Item).filter(Item.latitude.isnot(None)).all()
+        items = self.db.query(Item).filter(
+            Item.latitude.isnot(None),
+            Item.has_consent == True
+        ).all()
         results = []
 
         for item in items:

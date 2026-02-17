@@ -28,7 +28,8 @@ class TimeSearch:
         # created_at sütunu üzerinden BETWEEN sorgusu atıyoruz
         items = self.db.query(Item).filter(
             Item.creation_datetime >= start_date,
-            Item.creation_datetime <= end_date
+            Item.creation_datetime <= end_date,
+            Item.has_consent == True
         ).order_by(Item.creation_datetime.desc()).all()
 
         return [{'item_id': item.item_id, 'created_at': item.creation_datetime, 'file_path': item.file_path} for item in items]
@@ -38,7 +39,8 @@ class TimeSearch:
         Belirli bir yıldaki öğeleri bulur (Örn: 2025).
         """
         items = self.db.query(Item).filter(
-            extract('year', Item.creation_datetime) == year
+            extract('year', Item.creation_datetime) == year,
+            Item.has_consent == True
         ).order_by(Item.creation_datetime.asc()).all()
 
         return [{'item_id': item.item_id, 'created_at': item.creation_datetime, 'file_path': item.file_path} for item in items]
@@ -49,7 +51,8 @@ class TimeSearch:
         """
         items = self.db.query(Item).filter(
             extract('year', Item.creation_datetime) == year,
-            extract('month', Item.creation_datetime) == month
+            extract('month', Item.creation_datetime) == month,
+            Item.has_consent == True
         ).order_by(Item.creation_datetime.asc()).all()
 
         return [{'item_id': item.item_id, 'created_at': item.creation_datetime, 'file_path': item.file_path} for item in items]
@@ -60,7 +63,8 @@ class TimeSearch:
         """
         # func.date kullanarak timestamp verisini sadece tarih kısmıyla kıyaslıyoruz
         items = self.db.query(Item).filter(
-            func.date(Item.creation_datetime) == target_date
+            func.date(Item.creation_datetime) == target_date,
+            Item.has_consent == True
         ).all()
 
         return [{'item_id': item.item_id, 'created_at': item.creation_datetime, 'file_path': item.file_path} for item in items]
@@ -70,26 +74,26 @@ class TimeSearch:
         Zaman çizelgesi istatistiklerini döndürür.
         """
         # Toplam öğe sayısı
-        total_items = self.db.query(Item).count()
+        total_items = self.db.query(Item).filter(Item.has_consent == True).count()
         if total_items == 0:
             return {}
 
         # En eski ve en yeni tarihler
-        earliest = self.db.query(func.min(Item.creation_datetime)).scalar()
-        latest = self.db.query(func.max(Item.creation_datetime)).scalar()
+        earliest = self.db.query(func.min(Item.creation_datetime)).filter(Item.has_consent == True).scalar()
+        latest = self.db.query(func.max(Item.creation_datetime)).filter(Item.has_consent == True).scalar()
 
         # Yıllara göre dağılım
         yearly_counts = self.db.query(
             extract('year', Item.creation_datetime).label('year'),
             func.count(Item.item_id)
-        ).group_by('year').all()
+        ).filter(Item.has_consent == True).group_by('year').all()
 
         # Aylara göre dağılım
         monthly_counts = self.db.query(
             extract('year', Item.creation_datetime).label('year'),
             extract('month', Item.creation_datetime).label('month'),
             func.count(Item.item_id)
-        ).group_by('year', 'month').all()
+        ).filter(Item.has_consent == True).group_by('year', 'month').all()
 
         return {
             'earliest_date': earliest,

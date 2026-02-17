@@ -1,6 +1,7 @@
 # encryption_manager.py
 
 import os
+import stat
 from cryptography.fernet import Fernet
 from pathlib import Path
 
@@ -18,9 +19,11 @@ class EncryptionManager:
         """Anahtarı yükler veya yoksa yeni bir tane oluşturur."""
         if self.key_path.exists():
             return self.key_path.read_bytes()
-        
+
         key = Fernet.generate_key()
         self.key_path.write_bytes(key)
+        # Dosya izinlerini sadece sahibine oku/yaz olarak ayarla (diğerleri erişemez)
+        os.chmod(self.key_path, stat.S_IRUSR | stat.S_IWUSR)
         return key
 
     def encrypt_string(self, plain_text: str) -> str:

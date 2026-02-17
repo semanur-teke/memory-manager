@@ -11,6 +11,7 @@ from ..embedding.clip_embedder import CLIPEmbedder
 from ..embedding.sbert_embedder import SBERTEmbedder
 from ..embedding.faiss_manager import FaissManager
 from database.schema import Item
+from security.encryption_manager import EncryptionManager
 
 
 class TextSearch:
@@ -20,7 +21,7 @@ class TextSearch:
 
     def __init__(self, clip_embedder: CLIPEmbedder, sbert_embedder: SBERTEmbedder,
                  image_faiss: FaissManager, text_faiss: FaissManager,
-                 db_session: Session):
+                 db_session: Session, encryption_manager: EncryptionManager = None):
         """
         Args:
             clip_embedder: CLIP embedder (fotoğraf araması için)
@@ -28,12 +29,14 @@ class TextSearch:
             image_faiss: Fotoğraf embedding'leri için Faiss index
             text_faiss: Metin embedding'leri için Faiss index
             db_session: SQLAlchemy session (has_consent filtrelemesi için)
+            encryption_manager: Şifreli transkriptleri çözmek için
         """
         self.clip_embedder = clip_embedder
         self.sbert_embedder = sbert_embedder
         self.image_faiss = image_faiss
         self.text_faiss = text_faiss
         self.db_session = db_session
+        self.encryptor = encryption_manager or EncryptionManager()
 
     def search_images(self, query_text: str, k: int = 10) -> List[Dict]:
         """
@@ -118,12 +121,21 @@ class TextSearch:
                 results.append({
                     'item_id': item_id,
                     'score': round(score, 4),
-                    'transcript': consent_map[item_id].transcription or ''
+                    'transcript': self._decrypt_transcript(consent_map[item_id].transcription)
                 })
             if len(results) >= k:
                 break
 
         return results
+
+    def _decrypt_transcript(self, encrypted_text: str) -> str:
+        """Şifreli transkripti çözer. Çözülemezse boş string döner."""
+        if not encrypted_text:
+            return ''
+        try:
+            return self.encryptor.decrypt_string(encrypted_text)
+        except Exception:
+            return encrypted_text
 
     def search_all(self, query_text: str, k: int = 10) -> Dict[str, List[Dict]]:
         """

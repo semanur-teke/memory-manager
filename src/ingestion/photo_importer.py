@@ -58,32 +58,42 @@ class PhotoImporter:
             self.db.rollback()
             return None
 
-    def import_single_photo(self, image_path: Path, user_consent: bool) -> bool:
-        """Tek bir fotoğrafı tüm güvenlik ve işleme adımlarından geçirir."""
-        # 1. Privacy Check: Rıza yoksa işlem yapma [cite: 11, 112]
-        if not user_consent:
-            return False
+    def import_single_photo(self, image_path: Path, user_consent: bool) -> str:
+        """
+        Tek bir fotoğrafı tüm güvenlik ve işleme adımlarından geçirir.
 
-        # 2. Duplicate Check: Hash hesapla ve kontrol et [cite: 24, 28]
+        Returns:
+            'imported': Başarıyla içe aktarıldı
+            'no_consent': Rıza yok
+            'duplicate': Zaten mevcut
+            'error': İşlem hatası
+        """
+        # 1. Privacy Check: Rıza yoksa işlem yapma
+        if not user_consent:
+            return 'no_consent'
+
+        # 2. Duplicate Check: Hash hesapla ve kontrol et
         file_hash = self.exif_extractor.calculate_file_hash(image_path)
         if self.is_duplicate(file_hash):
-            return False
+            return 'duplicate'
 
         try:
-            # 3. EXIF & Metadata çıkarma [cite: 26]
+            # 3. EXIF & Metadata çıkarma
             metadata = self.exif_extractor.extract_metadata(image_path)
             metadata["file_hash"] = file_hash
 
-            # 4. Image Processing: Yön düzeltme ve boyutlandırma [cite: 25, 27]
+            # 4. Image Processing: Yön düzeltme ve boyutlandırma
             rotation_success = self.processor.process_image(image_path)
 
-            # 5. Encryption: Dosyayı diskte şifrele [cite: 13]
+            # 5. Encryption: Dosyayı diskte şifrele
             self.encryption.encrypt_file(str(image_path))
 
             # 6. Database: Kaydı tamamla
-            return self.add_photo_to_database(image_path, metadata, user_consent, rotation_success) is not None
+            if self.add_photo_to_database(image_path, metadata, user_consent, rotation_success) is not None:
+                return 'imported'
+            return 'error'
         except Exception:
-            return False
+            return 'error'
 
     def import_folder(self, folder_path: str, user_consent: bool, recursive: bool = True) -> Dict:
         """Klasördeki tüm fotoğrafları içe aktarır ve istatistik döner[cite: 28]."""
@@ -98,14 +108,11 @@ class PhotoImporter:
         }
 
         for file_path in files:
-            # Önce duplicate kontrolü (hız için DB sorgusu)
-            temp_hash = self.exif_extractor.calculate_file_hash(file_path)
-            if self.is_duplicate(temp_hash):
-                stats['skipped_duplicates'] += 1
-                continue
-
-            if self.import_single_photo(file_path, user_consent):
+            result = self.import_single_photo(file_path, user_consent)
+            if result == 'imported':
                 stats['imported'] += 1
+            elif result == 'duplicate':
+                stats['skipped_duplicates'] += 1
             else:
                 stats['errors'] += 1
 

@@ -1,9 +1,11 @@
+import io
 from pathlib import Path
 from typing import List, Optional, Union
 import numpy as np
 from PIL import Image
 from sentence_transformers import SentenceTransformer
 import torch
+from security.encryption_manager import EncryptionManager
 
 class CLIPEmbedder:
     """
@@ -11,13 +13,15 @@ class CLIPEmbedder:
     Fotoğrafları anlamsal sayılara (512 boyutlu vektörler) dönüştürür.
     """
     
-    def __init__(self, model_name: str = "clip-ViT-B-32"):
+    def __init__(self, model_name: str = "clip-ViT-B-32", encryption_manager: EncryptionManager = None):
         """
         Args:
             model_name: CLIP model adı (512 boyut için ViT-B-32 idealdir)
+            encryption_manager: Şifreli dosyaları çözmek için
         """
         self.model_name = model_name
         self.model = None
+        self.encryptor = encryption_manager or EncryptionManager()
         # Cihazı belirle: GPU varsa CUDA, yoksa CPU
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
     
@@ -28,22 +32,38 @@ class CLIPEmbedder:
             # SentenceTransformer, görsel ve metinsel CLIP işlemlerini tek çatı altında toplar.
             self.model = SentenceTransformer(self.model_name, device=self.device)
     
+    def _open_image(self, image_path: Path) -> Optional[Image.Image]:
+        """Fotoğrafı açar. Şifreliyse önce çözer, değilse direkt açar."""
+        try:
+            return Image.open(image_path)
+        except Exception:
+            # Dosya şifreli olabilir, decrypt edip tekrar dene
+            try:
+                decrypted_bytes = self.encryptor.decrypt_file(str(image_path))
+                if decrypted_bytes:
+                    return Image.open(io.BytesIO(decrypted_bytes))
+            except Exception:
+                pass
+        return None
+
     def encode_image(self, image_path: Path) -> Optional[np.ndarray]:
         """
         Tek bir fotoğraf için normalize edilmiş 512 boyutlu embedding üretir.
+        Şifreli dosyaları otomatik olarak bellekte çözer.
         """
         if not image_path.exists():
             return None
-            
+
         self.load_model()
-        
+
         try:
-            # Fotoğrafı aç
-            img = Image.open(image_path)
+            img = self._open_image(image_path)
+            if img is None:
+                return None
             # normalize_embeddings=True: FAISS araması için vektör boyunu 1'e eşitler.
             embedding = self.model.encode(
-                img, 
-                convert_to_numpy=True, 
+                img,
+                convert_to_numpy=True,
                 normalize_embeddings=True
             )
             return embedding.astype('float32')
@@ -61,7 +81,7 @@ class CLIPEmbedder:
         self.load_model()
         
         try:
-            images = [Image.open(p) for p in image_paths if p.exists()]
+            images = [img for p in image_paths if p.exists() for img in [self._open_image(p)] if img is not None]
             embeddings = self.model.encode(
                 images,
                 batch_size=32,
