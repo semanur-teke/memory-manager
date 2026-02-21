@@ -502,6 +502,197 @@ def __init__(self, model_name: str = "clip-ViT-B-32"):
 
 ---
 
+## Katkida Bulunma
+
+Projeye katkida bulunmak icin asagidaki adimlari takip edin.
+
+### Genel Kurallar
+
+1. **Her ozellik icin ayri branch** acilmalidir
+2. **Commit mesajlari** anlamli ve Turkce olmalidir
+3. **Code review** olmadan `main` branch'e merge yapilmaz
+4. Tum PR'lar proje yoneticisi tarafindan onaylanmalidir
+
+### Fork ve Kurulum (Ilk Kez)
+
+```bash
+# 1. GitHub'da sag ustteki "Fork" butonuna tiklayin
+
+# 2. Fork'unuzu klonlayin
+git clone https://github.com/KULLANICI_ADINIZ/memory-manager.git
+cd memory-manager
+
+# 3. Ana repo'yu upstream olarak ekleyin
+git remote add upstream https://github.com/semanur-teke/memory-manager.git
+
+# 4. Remote'lari kontrol edin
+git remote -v
+# origin    https://github.com/KULLANICI_ADINIZ/memory-manager.git (fetch)
+# origin    https://github.com/KULLANICI_ADINIZ/memory-manager.git (push)
+# upstream  https://github.com/semanur-teke/memory-manager.git (fetch)
+# upstream  https://github.com/semanur-teke/memory-manager.git (push)
+
+# 5. Sanal ortami olusturun ve bagimliliklari yukleyin
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+pip install -r requirements.txt
+```
+
+### Yeni Ozellik Gelistirme
+
+```bash
+# 1. Main branch'i guncelleyin
+git checkout main
+git fetch upstream
+git merge upstream/main
+git push origin main
+
+# 2. Gorevinize uygun branch olusturun
+git checkout -b feature/gorev-adi
+
+# Ornek branch isimleri:
+# feature/event-clustering
+# feature/flashcard-sm2
+# feature/flutter-gallery-screen
+# fix/faiss-search-bug
+# refactor/search-engine
+# test/privacy-tests
+```
+
+### Gelistirme ve Commit
+
+```bash
+# Degisikliklerinizi yapin...
+
+# Degisiklikleri stage'leyin
+git add .
+
+# Anlamli commit mesaji yazin (Turkce)
+git commit -m "feat: DBSCAN kumeleme algoritmasi tamamlandi"
+
+# Commit mesaj formatlari:
+# feat: yeni ozellik eklendi
+# fix: hata duzeltildi
+# refactor: kod iyilestirmesi yapildi
+# docs: dokuman guncellendi
+# test: test eklendi
+# style: kod formati duzenlendi
+```
+
+### Push ve Pull Request
+
+```bash
+# Branch'inizi kendi fork'unuza push'layin
+git push origin feature/gorev-adi
+```
+
+Ardindan GitHub'da:
+
+1. Fork'unuza gidin
+2. **"Compare & pull request"** butonuna tiklayin
+3. PR aciklamasini doldurun (asagidaki sablonu kullanin)
+4. **"Create pull request"** butonuna tiklayin
+
+### Pull Request Sablonu
+
+```markdown
+## Aciklama
+Bu PR ile ne yapildigini kisaca aciklayin.
+
+## Ilgili Asama
+- [ ] Asama 8: Olay Kumeleme
+- [ ] Asama 9: Ozetleme
+- [ ] Asama 10: Flashcard & SM-2
+- [ ] Asama 12: UI (Flutter/FastAPI)
+- [ ] Asama 13: Test Suite
+- [ ] Diger: ____
+
+## Degisiklik Turu
+- [ ] Yeni ozellik (feat)
+- [ ] Hata duzeltme (fix)
+- [ ] Refactoring
+- [ ] Test
+
+## Checklist
+- [ ] Kod calisiyor ve hata vermiyor
+- [ ] Yeni fonksiyonlar icin test yazildi
+- [ ] Item verisi donduren fonksiyonlarda has_consent filtresi var
+- [ ] Hardcoded deger yok, Config sabitleri kullanildi
+- [ ] logger kullanildi, print() kullanilmadi
+- [ ] Docstring yazildi
+```
+
+### Fork'u Guncel Tutma
+
+Ana repo guncellendiginde fork'unuzu senkronize edin:
+
+```bash
+git checkout main
+git fetch upstream
+git merge upstream/main
+git push origin main
+```
+
+### Bug Raporu
+
+Hata bildirmek icin GitHub **Issues** sekmesinden yeni issue acin:
+
+```markdown
+## Hata Raporu
+
+### Aciklama
+Hatayi kisaca aciklayin.
+
+### Tekrarlama Adimlari
+1. Suraya git...
+2. Sunu calistir...
+3. Hata olusuyor
+
+### Beklenen Davranis
+Ne olmasi gerekiyordu?
+
+### Gerceklesen Davranis
+Ne oldu?
+
+### Ortam
+- Python version:
+- OS:
+- GPU var mi:
+```
+
+### Yeni Ozellik Talebi
+
+```markdown
+## Ozellik Onerisi
+
+### Aciklama
+Ozelligi detaylica aciklayin.
+
+### Motivasyon
+Bu ozellik neden gerekli? Hangi sorunu cozuyor?
+
+### Onerilen Cozum
+Nasil implement edilebilecegine dair fikirleriniz.
+```
+
+### Code Review Sureci
+
+1. PR acildiginda proje yoneticisi review eder
+2. Gerekirse degisiklik talep edilir (Request Changes)
+3. Duzeltmeler yapilir ve tekrar review istenir
+4. Onay alindiktan sonra **Squash and Merge** yapilir
+
+#### Review Kriterleri
+
+- [ ] Kod okunabilir ve anlasilir mi?
+- [ ] `has_consent` filtresi gerekli yerlerde var mi?
+- [ ] Config sabitleri kullanilmis mi?
+- [ ] Gereksiz kod tekrari var mi?
+- [ ] Test yazilmis mi?
+- [ ] Edge case'ler dusunulmus mu?
+
+---
+
 ## Lisans
 
 MIT License

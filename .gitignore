@@ -89,4 +89,5 @@ database\test_index.pkl
 # --- Diğer Geçici Dosyalar ---
 *.xlsx
 ~$*.xlsx
-.claude
+.claude/
+.claude/**
