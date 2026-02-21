@@ -77,11 +77,15 @@ Thumbs.db
 # --- Çalışma Dokümanları ---
 PLAN.md
 TEAM_B_TEST_GUIDE.md
+TECHNICAL_ORIENTATION.md
+UI_GUIDELINE.md
+test_data
 
 # --- Test Çıktıları ---
 test_results.xml
 test_results.txt
 test_results.log
+database\test_index.pkl
 
 # --- Diğer Geçici Dosyalar ---
 *.xlsx
