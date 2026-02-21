@@ -206,9 +206,45 @@ memory-manager/
 │   │   ├── dbscan_clusterer.py      # DBSCAN zaman/konum kumeleme
 │   │   ├── refinement_clusterer.py  # Embedding bazli ince ayar
 │   │   ├── cover_photo_selector.py  # Kapak fotografi secimi
-│   │   └── event_clusterer.py       # Kumeleme koordinatoru
-│   ├── flashcards/                  # Egitim kartlari (planlandi)
-│   └── ui/                          # Kullanici arayuzu (planlandi)
+│   │   ├── event_clusterer.py       # Kumeleme koordinatoru
+│   │   └── summarizer.py            # Olay ozetleme (template/LLM)
+│   ├── flashcards/                  # Flashcard & SM-2 (iskelet hazir)
+│   │   ├── flashcard_generator.py   # Event'ten soru-cevap uretimi
+│   │   └── sm2_scheduler.py         # SM-2 aralikli tekrar algoritmasi
+│   └── ui/                          # Kullanici arayuzu (iskelet hazir)
+│       └── timeline_page.py         # Zaman cizelgesi goruntuleme
+├── api/                             # FastAPI backend (iskelet hazir)
+│   ├── main.py                      # FastAPI app, CORS, router kaydi
+│   ├── dependencies.py              # Dependency injection (DB, servisler)
+│   ├── models/                      # Pydantic request/response semalari
+│   │   ├── item_models.py           # Item DTO'lari
+│   │   ├── event_models.py          # Event DTO'lari
+│   │   ├── search_models.py         # Arama DTO'lari
+│   │   ├── flashcard_models.py      # Flashcard DTO'lari
+│   │   └── common_models.py         # Ortak response modelleri
+│   └── routers/                     # REST endpoint'leri
+│       ├── import_router.py         # /api/import
+│       ├── gallery_router.py        # /api/gallery
+│       ├── search_router.py         # /api/search
+│       ├── privacy_router.py        # /api/privacy
+│       ├── events_router.py         # /api/events
+│       ├── flashcard_router.py      # /api/flashcards
+│       ├── timeline_router.py       # /api/timeline
+│       └── settings_router.py       # /api/settings
+├── flutter_app/                     # Flutter masaustu UI (iskelet hazir)
+│   ├── pubspec.yaml                 # Flutter bagimliliklari
+│   └── lib/
+│       ├── main.dart                # Uygulama giris noktasi
+│       ├── app.dart                 # MaterialApp + GoRouter
+│       ├── theme/                   # Tema dosyalari
+│       │   ├── colors.dart          # Renk paleti
+│       │   ├── typography.dart      # Yazi tipleri
+│       │   └── app_theme.dart       # ThemeData birlestirme
+│       ├── models/                  # Dart veri modelleri
+│       ├── services/                # API istemci servisleri
+│       ├── providers/               # Riverpod state yonetimi
+│       ├── screens/                 # 12 ekran (Home, Gallery, Search, ...)
+│       └── widgets/                 # Tekrar kullanilabilir widget'lar
 ├── models/                          # AI model dosyalari
 │   ├── clip/                        # CLIP model agirliklari
 │   ├── sbert/                       # SBERT model agirliklari
@@ -389,10 +425,10 @@ Cozumleme:  ciphertext → base64 decode → HMAC verify → AES-CBC decrypt →
 | Asama | Aciklama | Durum |
 |-------|----------|-------|
 | **8** | Olay Kumeleme — DBSCAN ile zaman/konum kumeleme, kapak fotografi secimi | **Sirada** (iskelet hazir) |
-| **9** | Ozetleme — Olay bazli metin ozetleme | Planlandi |
-| **10** | Flashcard & SM-2 — Araliklarla tekrar sistemi | Planlandi |
-| **11** | Zaman Cizelgesi — Kronolojik goruntuleyici | Planlandi |
-| **12** | Kullanici Arayuzu — Flutter + FastAPI masaustu uygulamasi | Planlandi |
+| **9** | Ozetleme — Olay bazli metin ozetleme | **Sirada** (iskelet hazir) |
+| **10** | Flashcard & SM-2 — Araliklarla tekrar sistemi | **Sirada** (iskelet hazir) |
+| **11** | Zaman Cizelgesi — Kronolojik goruntuleyici | **Sirada** (iskelet hazir) |
+| **12** | Kullanici Arayuzu — Flutter + FastAPI masaustu uygulamasi | **Sirada** (iskelet hazir) |
 | **13** | Test Suite — Kapsamli unit ve integration testler | Devam ediyor |
 | **14** | Yedekleme & Disa Aktarma — Sifreli export | Planlandi |
 | **15** | Performans Optimizasyonu — batch embedding, cache, FAISS index tipi | Planlandi |

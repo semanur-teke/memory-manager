@@ -1,8 +1,11 @@
 """
-Flashcard Modülü (Aşama 7-8)
+Flashcard Modulu (Asama 10)
 
-Gelecekte eklenecek - şimdilik placeholder
+Flashcard uretimi ve SM-2 aralikli tekrar sistemi.
 """
 
-# Bu modül Aşama 7-8'de eklenecek
+from .flashcard_generator import FlashcardGenerator
+from .sm2_scheduler import SM2Scheduler
+
+__all__ = ['FlashcardGenerator', 'SM2Scheduler']
 

@@ -1,8 +1,10 @@
 """
-Kullanıcı Arayüzü Modülü (Aşama 8-9)
+Kullanici Arayuzu Modulu (Asama 11)
 
-Gelecekte eklenecek - şimdilik placeholder
+Zaman cizelgesi ve gorsel arayuz bileşenleri.
 """
 
-# Bu modül Aşama 8-9'da eklenecek
+from .timeline_page import TimelinePage
+
+__all__ = ['TimelinePage']
 
