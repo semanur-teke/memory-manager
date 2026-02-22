@@ -3,7 +3,7 @@
 import logging
 from typing import List, Optional
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy import create_engine, event, Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column, Session, sessionmaker
 from config import Config
 
@@ -67,13 +67,16 @@ class Event(Base):
     summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # İlişki - Items
-    items: Mapped[List['Item']] = relationship(back_populates='event', cascade='all, delete-orphan')
+    # NOT: cascade='all, delete-orphan' KULLANILAMAZ — Event silinince
+    # fotograflar da silinirdi. Fotograflar event'ten bagimsiz vardir.
+    # Event silindiginde Item.event_id otomatik NULL olur (ondelete='SET NULL').
+    items: Mapped[List['Item']] = relationship(back_populates='event')
     
     # İlişki - Flashcards
     flashcards: Mapped[List['Flashcard']] = relationship(back_populates='event', cascade='all, delete-orphan')
 
     # Kapak Fotoğrafı İlişkisi
-    cover_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey('items.item_id'), nullable=True)
+    cover_item_id: Mapped[Optional[int]] = mapped_column(ForeignKey('items.item_id', ondelete='SET NULL'), nullable=True)
     
     def __repr__(self) -> str:
         return f"<Event(id={self.event_id}, title='{self.title}')>"
@@ -103,7 +106,7 @@ class Item(Base):
     faiss_index_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True) 
     
     # İlişki - Event (Foreign Key)
-    event_id: Mapped[Optional[int]] = mapped_column(ForeignKey('events.event_id'), nullable=True)
+    event_id: Mapped[Optional[int]] = mapped_column(ForeignKey('events.event_id', ondelete='SET NULL'), nullable=True)
     event: Mapped['Event'] = relationship(back_populates='items')
 
     def __repr__(self) -> str:
@@ -114,6 +117,13 @@ class Item(Base):
 class DatabaseSchema:
     def __init__(self, db_url: str = Config.DATABASE_URL):
         self.engine = create_engine(db_url)
+        # SQLite foreign key desteğini aktif et (varsaylanda kapali)
+        # Bu olmadan ondelete='SET NULL' calismaz
+        @event.listens_for(self.engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
         self.SessionLocal = sessionmaker(bind=self.engine)
 
     def create_all_tables(self):
