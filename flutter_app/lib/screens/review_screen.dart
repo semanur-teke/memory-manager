@@ -1,12 +1,14 @@
-/// SM-2 flashcard tekrar ekrani.
-/// Kart cevirme animasyonu, 1-5 arasi degerlendirme, ilerleme gostergesi.
-///
-/// API Cagrilari:
-///   GET /api/flashcards/due-today
-///   POST /api/flashcards/{id}/review
-///
-/// UX: FlipCard paketi ile 3D cevirme animasyonu (300ms).
+import 'package:flutter/material.dart';
 
-class ReviewScreen {
-  // Widget build(BuildContext context)
+/// Flashcard tekrar ekrani — Phase 5'te doldurulacak.
+class ReviewScreen extends StatelessWidget {
+  const ReviewScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Kart Tekrari')),
+      body: const Center(child: Text('Tekrar ekrani — yakinda')),
+    );
+  }
 }

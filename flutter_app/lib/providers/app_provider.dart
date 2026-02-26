@@ -1,12 +1,13 @@
-/// Global uygulama state management (Riverpod).
-/// AppState: themeMode, isBackendConnected
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/api_client.dart';
 
-class AppState {
-  // final ThemeMode themeMode
-  // final bool isBackendConnected
-}
+/// API client provider — tum uygulamada tek instance kullanilir
+final apiClientProvider = Provider<ApiClient>((ref) {
+  return ApiClient();
+});
 
-class AppNotifier {
-  // void toggleTheme()
-  // Future<void> checkBackendConnection()
-}
+/// Backend baglanti durumu
+final healthCheckProvider = FutureProvider<bool>((ref) async {
+  final api = ref.read(apiClientProvider);
+  return api.healthCheck();
+});

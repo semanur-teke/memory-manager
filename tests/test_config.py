@@ -15,7 +15,8 @@ class TestConfigValues:
     def test_model_names_not_empty(self):
         """Model adları boş değil."""
         assert len(Config.SBERT_MODEL_NAME) > 0
-        assert len(Config.CLIP_MODEL_NAME) > 0
+        assert len(Config.CLIP_IMAGE_MODEL) > 0
+        assert len(Config.CLIP_TEXT_MODEL) > 0
         assert len(Config.WHISPER_MODEL_SIZE) > 0
 
     def test_database_url_is_sqlite(self):

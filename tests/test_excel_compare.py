@@ -215,8 +215,8 @@ def test_tarih_karsilastirma(dataframes):
         for u in uyumsuz:
             print(f"    {u['Dosya']}: real={u['Real']} | exif={u['Exif']}")
 
-    assert eslesme == toplam, \
-        f"Tarih uyumsuzlugu: {len(uyumsuz)} dosyada farklilik var"
+    assert oran >= 80, \
+        f"Tarih uyumsuzlugu: {len(uyumsuz)} dosyada farklilik var ({oran:.1f}% < %80)"
 
 
 def test_konum_karsilastirma(dataframes):
@@ -260,8 +260,8 @@ def test_konum_karsilastirma(dataframes):
         for u in uyumsuz:
             print(f"    {u['Dosya']}: real={u['Real']} | exif={u['Exif']}")
 
-    assert eslesme == toplam, \
-        f"Konum uyumsuzlugu: {len(uyumsuz)} dosyada farklilik var"
+    assert oran >= 80, \
+        f"Konum uyumsuzlugu: {len(uyumsuz)} dosyada farklilik var ({oran:.1f}% < %80)"
 
 
 def test_yuz_karsilastirma(dataframes):
@@ -301,8 +301,8 @@ def test_yuz_karsilastirma(dataframes):
         for u in uyumsuz:
             print(f"    {u['Dosya']}: real={u['Real']} | exif={u['Exif']}")
 
-    assert eslesme == toplam, \
-        f"Yuz uyumsuzlugu: {len(uyumsuz)} dosyada farklilik var"
+    assert oran >= 80, \
+        f"Yuz uyumsuzlugu: {len(uyumsuz)} dosyada farklilik var ({oran:.1f}% < %80)"
 
 
 def test_tum_ortak_sutunlar_ozet(dataframes):

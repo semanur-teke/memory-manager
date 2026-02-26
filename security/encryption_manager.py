@@ -2,9 +2,12 @@
 
 import os
 import stat
-from cryptography.fernet import Fernet
+import logging
+from cryptography.fernet import Fernet, InvalidToken
 from pathlib import Path
 from config import Config
+
+logger = logging.getLogger(__name__)
 
 class EncryptionManager:
     """
@@ -44,13 +47,25 @@ class EncryptionManager:
         path = Path(file_path)
         if path.exists():
             data = path.read_bytes()
+            # Çift şifreleme koruması: zaten şifreli mi kontrol et
+            try:
+                self.cipher.decrypt(data)
+                logger.warning(f"Dosya zaten şifreli, tekrar şifrelenmedi: {file_path}")
+                return
+            except InvalidToken:
+                pass  # Şifreli değil, şifrelemeye devam
             encrypted_data = self.cipher.encrypt(data)
             path.write_bytes(encrypted_data)
 
     def decrypt_file(self, file_path: str) -> bytes:
         """Şifreli dosyanın verisini okur ve şifresini çözer."""
         path = Path(file_path)
-        if path.exists():
+        if not path.exists():
+            logger.error(f"Dosya bulunamadı: {file_path}")
+            return b""
+        try:
             encrypted_data = path.read_bytes()
             return self.cipher.decrypt(encrypted_data)
-        return b""
+        except InvalidToken:
+            logger.error(f"Şifre çözme başarısız (anahtar uyumsuz veya dosya bozuk): {file_path}")
+            raise

@@ -1,10 +1,15 @@
-/// Flashcard listesi ekrani.
-/// Tum kartlar + "Bugun N kart tekrar edilecek" badge + "Tekrar Basla" butonu.
-///
-/// API Cagrilari:
-///   GET /api/flashcards
-///   GET /api/flashcards/due-today
+import 'package:flutter/material.dart';
+import '../widgets/empty_state.dart';
 
-class FlashcardsScreen {
-  // Widget build(BuildContext context)
+/// Flashcard ekrani — Phase 5'te doldurulacak.
+class FlashcardsScreen extends StatelessWidget {
+  const FlashcardsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const EmptyState(
+      icon: Icons.quiz_outlined,
+      message: 'Flashcard\nYakinda: tekrar kartlari ve SM-2 zamanlama',
+    );
+  }
 }

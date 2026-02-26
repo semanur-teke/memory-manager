@@ -70,7 +70,7 @@ class Event(Base):
     # NOT: cascade='all, delete-orphan' KULLANILAMAZ — Event silinince
     # fotograflar da silinirdi. Fotograflar event'ten bagimsiz vardir.
     # Event silindiginde Item.event_id otomatik NULL olur (ondelete='SET NULL').
-    items: Mapped[List['Item']] = relationship(back_populates='event')
+    items: Mapped[List['Item']] = relationship(back_populates='event', foreign_keys='[Item.event_id]')
     
     # İlişki - Flashcards
     flashcards: Mapped[List['Flashcard']] = relationship(back_populates='event', cascade='all, delete-orphan')
@@ -107,7 +107,7 @@ class Item(Base):
     
     # İlişki - Event (Foreign Key)
     event_id: Mapped[Optional[int]] = mapped_column(ForeignKey('events.event_id', ondelete='SET NULL'), nullable=True)
-    event: Mapped['Event'] = relationship(back_populates='items')
+    event: Mapped['Event'] = relationship(back_populates='items', foreign_keys=[event_id])
 
     def __repr__(self) -> str:
         return f"<Item(id={self.item_id}, type='{self.type}', consent={self.has_consent})>"

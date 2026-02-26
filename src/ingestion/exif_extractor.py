@@ -1,9 +1,12 @@
+import logging
 import hashlib
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 from datetime import datetime
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
+
+logger = logging.getLogger(__name__)
 
 class EXIFExtractor:
     """
@@ -43,7 +46,8 @@ class EXIFExtractor:
                     tag_name = TAGS.get(tag_id)
                     if tag_name == "DateTimeOriginal":
                         return datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
-        except Exception:
+        except Exception as e:
+            logger.warning(f"EXIF tarih çıkarma hatası ({image_path}): {e}")
             return None
         return None
 
@@ -82,7 +86,8 @@ class EXIFExtractor:
                         lng = -lng
                         
                     return (lat, lng)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"GPS çıkarma hatası ({image_path}): {e}")
             return None
         return None
 
@@ -101,8 +106,8 @@ class EXIFExtractor:
                             info['make'] = value.strip()
                         elif tag_name == "Model":
                             info['model'] = value.strip()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Kamera bilgisi çıkarma hatası ({image_path}): {e}")
         return info
 
     def extract_metadata(self, image_path: Path) -> Dict:

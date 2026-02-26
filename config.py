@@ -31,7 +31,8 @@ class Config:
     # Model İsimleri
     # -----------------------------------------------------------------
     SBERT_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-    CLIP_MODEL_NAME = "clip-ViT-B-32"
+    CLIP_IMAGE_MODEL = "clip-ViT-B-32"
+    CLIP_TEXT_MODEL = "clip-ViT-B-32-multilingual-v1"
     WHISPER_MODEL_SIZE = "small"
 
     # -----------------------------------------------------------------
@@ -66,6 +67,18 @@ class Config:
     DEFAULT_SEARCH_RADIUS_KM = 5.0
     CITY_SEARCH_RADIUS_KM = 20.0
     DEFAULT_SEARCH_K = 10
+
+    # -----------------------------------------------------------------
+    # API Ayarlari
+    # -----------------------------------------------------------------
+    API_HOST = "127.0.0.1"
+    API_PORT = 8000
+    API_CORS_ORIGINS = ["http://localhost:*"]
+    THUMBNAIL_SIZE = (200, 200)
+    THUMBNAIL_QUALITY = 80
+    THUMBNAIL_CACHE_MAX_SIZE = 500
+    GALLERY_PAGE_SIZE = 40
+    SEARCH_RESULTS_PAGE_SIZE = 20
 
     # -----------------------------------------------------------------
     # Logging

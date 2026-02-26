@@ -1,6 +1,9 @@
-/// Uygulama giris noktasi.
-/// ProviderScope ile Riverpod baslatma ve App widget'ini calistirma.
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'app.dart';
 
+/// Uygulama giris noktasi.
+/// ProviderScope ile Riverpod state management baslatilir.
 void main() {
-  // TODO: runApp(ProviderScope(child: App()));
+  runApp(const ProviderScope(child: MemoryManagerApp()));
 }

@@ -9,7 +9,8 @@
   <img src="https://img.shields.io/badge/PyTorch-2.10-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch">
   <img src="https://img.shields.io/badge/FAISS-Vector%20Search-4285F4?style=for-the-badge&logo=meta&logoColor=white" alt="FAISS">
   <img src="https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
-  <img src="https://img.shields.io/badge/Flutter-UI%20(Planlandi)-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter">
+  <img src="https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Flutter-UI-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter">
 </p>
 
 <p align="center">
@@ -49,7 +50,7 @@ Kisisel anilar binlerce dosya arasinda kaybolur. "Gecen yaz plajda cekilmis o fo
 
 | Arama Turu | Aciklama | Teknoloji |
 |------------|----------|-----------|
-| **Metin Aramasi** | "Plajda gun batimi" yaz, ilgili fotograflari bul | CLIP + SBERT + FAISS |
+| **Metin Aramasi** | "Plajda gun batimi" yaz, ilgili fotograflari bul | CLIP (multilingual) + FAISS |
 | **Zaman Aramasi** | Tarih araligi, yil, ay veya gun bazli filtrele | SQLAlchemy query |
 | **Konum Aramasi** | GPS koordinati veya sehir adi ile ara | Geopy jeodezik mesafe |
 | **Birlesik Arama** | Tum filtreleri kesistirerek birlikte kullan | SearchEngine koordinatoru |
@@ -57,26 +58,39 @@ Kisisel anilar binlerce dosya arasinda kaybolur. "Gecen yaz plajda cekilmis o fo
 ### Akilli Veri Isleme
 
 ```
-Fotograf → EXIF cikar → Yon duzelt → Sifrele → DB kaydet → CLIP vektoru → FAISS indeksi
+Fotograf → EXIF cikar → Yon duzelt → CLIP vektor uret → Sifrele → DB kaydet → FAISS'e ekle
 Ses      → Whisper transkript → Sifrele → DB kaydet → SBERT vektoru → FAISS indeksi
-Arama    → Sorgu vektoru → FAISS ara → Consent filtrele → Sonuc
+Arama    → CLIP multilingual text encode → FAISS ara → MIN_SCORE filtrele → Consent filtrele → Sonuc
 ```
 
-### Multimodal Embedding Sistemi
+### Multimodal Embedding Sistemi (Dual-Model CLIP)
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│               CLIP (ViT-B-32)                        │
+│         CLIP IMAGE MODEL (clip-ViT-B-32)             │
 │         Fotograf → 512 boyutlu vektor                │
+│         Import sirasinda otomatik uretilir           │
 └───────────────────────┬─────────────────────────────┘
                         │
-                        ├──→ MultimodalFuser ──→ 896D birlesik vektor
+                        ├──→ FAISS FlatL2 Index (512D)
+                        │         Semantik arama
                         │
 ┌───────────────────────┴─────────────────────────────┐
+│  CLIP TEXT MODEL (clip-ViT-B-32-multilingual-v1)     │
+│         Metin → 512 boyutlu vektor (68 dil)          │
+│         Turkce, Ingilizce, Almanca, ... destekli     │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
 │            SBERT (all-MiniLM-L6-v2)                  │
 │           Metin → 384 boyutlu vektor                 │
 └─────────────────────────────────────────────────────┘
 ```
+
+**Neden iki ayri CLIP modeli?**
+- `clip-ViT-B-32`: Orijinal CLIP — gorsel encoding icin optimum, ama sadece Ingilizce metin destekler
+- `clip-ViT-B-32-multilingual-v1`: 68 dilde metin encoding, ama gorsel encoding desteklemez
+- Cozum: Fotograflar icin orijinal, arama metni icin multilingual model kullanilir
 
 ### Guvenlik Katmani
 
@@ -95,7 +109,7 @@ Arama    → Sorgu vektoru → FAISS ara → Consent filtrele → Sonuc
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                      KULLANICI                           │
-│               (Flutter UI — Planlanıyor)                  │
+│               (Flutter UI + FastAPI Backend)              │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
 │  ┌──────────┐  ┌──────────┐  ┌───────────┐              │
@@ -164,14 +178,16 @@ Arama    → Sorgu vektoru → FAISS ara → Consent filtrele → Sonuc
 | **Veritabani** | SQLAlchemy + SQLite | ORM, 4 tablo, iliskisel veri |
 | **Sifreleme** | cryptography (Fernet) | AES-128-CBC simetrik sifreleme |
 | **Goruntu AI** | CLIP (ViT-B-32) | Fotograf → 512 boyutlu vektor |
-| **Metin AI** | SBERT (all-MiniLM-L6-v2) | Metin → 384 boyutlu vektor |
+| **Metin AI (Arama)** | CLIP (ViT-B-32-multilingual-v1) | Metin → 512D vektor (68 dil, Turkce dahil) |
+| **Metin AI (Embedding)** | SBERT (all-MiniLM-L6-v2) | Metin → 384 boyutlu vektor |
 | **Ses AI** | OpenAI Whisper | Ses → metin transkripsiyonu |
 | **Vektor Arama** | FAISS (Meta) | Milyonlarca vektorde milisaniye arama |
 | **Konum** | Geopy + Nominatim | GPS koordinat ↔ sehir adi donusumu |
 | **Goruntu Isleme** | Pillow (PIL) | EXIF okuma, yon duzeltme, boyut kucultme |
 | **Kumeleme** | scikit-learn (DBSCAN) | Zaman/konum bazli olay kumeleme |
 | **Yapilandirma** | config.py (Config sinifi) | Tum sabitler tek merkezde |
-| **UI (Planlandi)** | Flutter + FastAPI | Cross-platform masaustu uygulamasi |
+| **Backend API** | FastAPI + Uvicorn | REST API, CORS, Swagger UI |
+| **UI** | Flutter (Dart) | Cross-platform masaustu uygulamasi |
 
 ---
 
@@ -213,9 +229,9 @@ memory-manager/
 │   │   └── sm2_scheduler.py         # SM-2 aralikli tekrar algoritmasi
 │   └── ui/                          # Kullanici arayuzu (iskelet hazir)
 │       └── timeline_page.py         # Zaman cizelgesi goruntuleme
-├── api/                             # FastAPI backend (iskelet hazir)
+├── api/                             # FastAPI REST API katmani
 │   ├── main.py                      # FastAPI app, CORS, router kaydi
-│   ├── dependencies.py              # Dependency injection (DB, servisler)
+│   ├── dependencies.py              # DB session, CLIPEmbedder, FaissManager singleton'lari
 │   ├── models/                      # Pydantic request/response semalari
 │   │   ├── item_models.py           # Item DTO'lari
 │   │   ├── event_models.py          # Event DTO'lari
@@ -331,44 +347,57 @@ Projeye ozel `.env` dosyasina gerek yoktur. Tum yapilandirma `config.py` icerisi
 │  2. resize_if_needed() → max 2000px                │
 └───────────────────────┬───────────────────────────┘
                         ▼
+┌─ CLIP embedding uret ───────────────────────────┐
+│  clip-ViT-B-32 → 512D vektor (raw image'den)      │
+│  Sifreleme ONCESI yapilir (decrypt gerektirmez)    │
+└───────────────────────┬───────────────────────────┘
+                        ▼
 ┌─ encrypt_file() ─────────────────────────────────┐
 │  Fernet ile dosyayi yerinde sifrele                │
 └───────────────────────┬───────────────────────────┘
                         ▼
 ┌─ add_photo_to_database() ────────────────────────┐
-│  Item olustur + DB'ye commit                       │
+│  Item olustur + DB'ye commit → item_id al          │
+└───────────────────────┬───────────────────────────┘
+                        ▼
+┌─ FAISS'e ekle ───────────────────────────────────┐
+│  faiss_manager.add_embeddings(vec, [item_id])      │
+│  Item.faiss_index_id guncelle                      │
 └───────────────────────┬───────────────────────────┘
                         ▼
                   return 'imported'
 ```
 
-### Arama Pipeline
+### Arama Pipeline (Semantik Arama — TAMAMLANDI)
 
 ```
 [Kullanici: "plajda gun batimi"]
         │
         ▼
 ┌─ Sorgu vektoru olustur ─────────────────────────┐
-│  CLIP.encode_text() → 512D vektor                 │
-│  SBERT.encode_text() → 384D vektor                │
+│  CLIP multilingual encode_text() → 512D vektor    │
+│  (clip-ViT-B-32-multilingual-v1 — 68 dil)        │
 └───────────────────────┬─────────────────────────┘
                         ▼
 ┌─ FAISS vektor arama ────────────────────────────┐
-│  image_faiss.search(clip_vec, k*2)                │
-│  text_faiss.search(sbert_vec, k*2)                │
+│  faiss_manager.search(clip_vec, k=min(200, N))    │
+│  En yakin komsulari bul (L2 distance)             │
 └───────────────────────┬─────────────────────────┘
                         ▼
-┌─ Consent filtresi (DB) ─────────────────────────┐
-│  Item.has_consent == True  ← KRITIK               │
-│  Sadece rizali item'lar kalir                      │
+┌─ Skor hesaplama ────────────────────────────────┐
+│  score = max(0, 1 - distance / 2)                 │
+│  MIN_SCORE = 0.24 altindakileri filtrele          │
 └───────────────────────┬─────────────────────────┘
                         ▼
-┌─ Skor hesaplama + Decrypt ──────────────────────┐
-│  score = 1 - distance / 2                         │
-│  Sifreli transkriptler cozulur                    │
+┌─ DB filtreleri ─────────────────────────────────┐
+│  has_consent == True (KRITIK)                     │
+│  + opsiyonel tarih araligi filtresi               │
+│  + opsiyonel konum/yaricap filtresi               │
 └───────────────────────┬─────────────────────────┘
                         ▼
-                  return results[:k]
+              return results (skora gore sirali)
+
+[Query yoksa veya FAISS bossa → DB LIKE fallback]
 ```
 
 ---
@@ -400,7 +429,7 @@ Cozumleme:  ciphertext → base64 decode → HMAC verify → AES-CBC decrypt →
 
 1. **`has_consent` filtresi**: Item verisi donduren **her** fonksiyon `has_consent == True` filtresi icermelidir
 2. **`secret.key` korumasi**: Bu dosya kaybolursa tum sifreli veriler **geri donusumsuz** erislemez olur
-3. **Import sirasi**: EXIF cikar → Goruntu isle → Sifrele → DB kaydet (sira degistirilemez)
+3. **Import sirasi**: EXIF cikar → Goruntu isle → CLIP vektor → Sifrele → DB kaydet → FAISS ekle (sira degistirilemez)
 4. **FAISS normalizasyon**: `faiss.normalize_L2()` atlanirsa arama sonuclari anlamsiz olur
 5. **ID mapping sync**: FAISS indeksi ve `.pkl` mapping dosyasi her zaman birlikte guncellenir
 
@@ -420,22 +449,29 @@ Cozumleme:  ciphertext → base64 decode → HMAC verify → AES-CBC decrypt →
 | **6** | Embedding & Multimodal Fusion — CLIP 512D, SBERT 384D, Fuser 896D, FAISS | **Tamamlandi** |
 | **7** | Arama Motoru — semantik, zaman, konum, birlesik arama | **Tamamlandi** |
 
+### Tamamlanan Ek Asamalar
+
+| Asama | Aciklama | Durum |
+|-------|----------|-------|
+| **UI Faz 0-3** | Flutter UI + FastAPI backend — import, galeri, arama, gizlilik, dashboard ekranlari | **Tamamlandi** |
+| **UI Faz 3.5** | CLIP/FAISS semantik arama entegrasyonu — dual-model CLIP, import pipeline, reindex | **Tamamlandi** |
+| **13** | Test Suite — 163 test passed, 0 failed | **Tamamlandi** |
+
 ### Devam Eden ve Planlanan Asamalar
 
 | Asama | Aciklama | Durum |
 |-------|----------|-------|
+| **BUG** | Ses/transkripsiyon arama birlestirme — semantik arama erken return edip DB fallback'i atliyor | **Oncelikli** |
 | **8** | Olay Kumeleme — DBSCAN ile zaman/konum kumeleme, kapak fotografi secimi | **Sirada** (iskelet hazir) |
 | **9** | Ozetleme — Olay bazli metin ozetleme | **Sirada** (iskelet hazir) |
 | **10** | Flashcard & SM-2 — Araliklarla tekrar sistemi | **Sirada** (iskelet hazir) |
 | **11** | Zaman Cizelgesi — Kronolojik goruntuleyici | **Sirada** (iskelet hazir) |
-| **12** | Kullanici Arayuzu — Flutter + FastAPI masaustu uygulamasi | **Sirada** (iskelet hazir) |
-| **13** | Test Suite — Kapsamli unit ve integration testler | Devam ediyor |
 | **14** | Yedekleme & Disa Aktarma — Sifreli export | Planlandi |
 | **15** | Performans Optimizasyonu — batch embedding, cache, FAISS index tipi | Planlandi |
+| **—** | CLIP ViT-B-16 model yukseltmesi (daha kaliteli vektor, ayni boyut) | Planlandi |
+| **—** | Kullaniciya "Arama Kalitesi" ayari (Hizli/Dengeli/En Iyi) | Planlandi |
 
-### UI Vizyonu: Flutter + FastAPI
-
-Projenin son haline ulastiginda asagidaki mimari ile masaustu uygulamasi olarak calisacak:
+### UI Mimarisi: Flutter + FastAPI (AKTIF)
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -446,12 +482,13 @@ Projenin son haline ulastiginda asagidaki mimari ile masaustu uygulamasi olarak 
                        │ HTTP (localhost:8000)
 ┌──────────────────────┴──────────────────────────────┐
 │               FASTAPI KATMANI (Python)               │
-│   REST endpoints — backend siniflarini sarmallar     │
+│   REST endpoints + CLIPEmbedder + FaissManager       │
+│   Semantik arama, reindex, import pipeline           │
 └──────────────────────┬──────────────────────────────┘
                        │ Direct Python calls
 ┌──────────────────────┴──────────────────────────────┐
 │            MEVCUT BACKEND (Python)                    │
-│   SearchEngine | PhotoImporter | EncryptionManager   │
+│   PhotoImporter | EncryptionManager | PrivacyManager │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -508,8 +545,10 @@ Tum sabit degerler `config.py` icerisindeki `Config` sinifinda merkezilestirmist
 
 ```python
 # DOGRU:
-def __init__(self, model_name: str = Config.CLIP_MODEL_NAME):
-    self.model_name = model_name
+def __init__(self, image_model: str = Config.CLIP_IMAGE_MODEL,
+             text_model: str = Config.CLIP_TEXT_MODEL):
+    self.image_model = image_model
+    self.text_model = text_model
 
 # YANLIS:
 def __init__(self, model_name: str = "clip-ViT-B-32"):

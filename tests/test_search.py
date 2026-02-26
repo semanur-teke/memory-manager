@@ -288,20 +288,20 @@ class TestTimeSearch:
 
     def test_get_timeline_stats_empty(self, time_searcher, mock_db):
         """Boş DB'de istatistik boş dict döner."""
-        mock_db.query.return_value.count.return_value = 0
+        mock_db.query.return_value.filter.return_value.count.return_value = 0
 
         result = time_searcher.get_timeline_stats()
         assert result == {}
 
     def test_get_timeline_stats(self, time_searcher, mock_db):
         """İstatistikler doğru formatta döner."""
-        mock_db.query.return_value.count.return_value = 5
-        mock_db.query.return_value.scalar.side_effect = [
+        mock_db.query.return_value.filter.return_value.count.return_value = 5
+        mock_db.query.return_value.filter.return_value.scalar.side_effect = [
             datetime(2024, 1, 1),   # earliest
             datetime(2025, 12, 31)  # latest
         ]
         # yearly_counts
-        mock_db.query.return_value.group_by.return_value.all.side_effect = [
+        mock_db.query.return_value.filter.return_value.group_by.return_value.all.side_effect = [
             [(2024, 2), (2025, 3)],           # yıllık
             [(2024, 1, 1), (2024, 6, 1), (2025, 3, 3)]  # aylık
         ]

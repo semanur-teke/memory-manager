@@ -1,18 +1,15 @@
-/// Ayarlar ekrani.
-/// secret.key yonetimi, cache, veritabani bilgisi, tema secimi.
-///
-/// API Cagrilari:
-///   GET /api/settings/info
-///   POST /api/settings/backup-key
-///   POST /api/settings/clear-cache
-///
-/// Icerik:
-///   - secret.key dosya yolu + durum + yedekleme/geri yukleme
-///   - Thumbnail cache boyutu + "Cache Temizle"
-///   - Veritabani boyutu, FAISS vektor sayisi
-///   - Tema secimi (acik/koyu)
-///   - Hakkinda (versiyon, lisans)
+import 'package:flutter/material.dart';
+import '../widgets/empty_state.dart';
 
-class SettingsScreen {
-  // Widget build(BuildContext context)
+/// Ayarlar ekrani — Phase 5'te doldurulacak.
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const EmptyState(
+      icon: Icons.settings_outlined,
+      message: 'Ayarlar\nYakinda: tema, secret.key yedekleme, cache temizleme',
+    );
+  }
 }

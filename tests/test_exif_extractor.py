@@ -26,7 +26,7 @@ except ImportError:
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.webp', '.jfif'}
 
 # ========== AYARLAR ==========
-TEST_FOLDER = r"C:\Users\sema\Desktop\memory-manager\test_images"
+TEST_FOLDER = r"C:\Users\sema\Desktop\test_images"
 OUTPUT_EXCEL = r"C:\Users\sema\Desktop\memory-manager\exif_rapor_v2.xlsx"
 
 # DNN model dosyalari

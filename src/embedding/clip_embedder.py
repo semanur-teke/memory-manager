@@ -14,31 +14,34 @@ logger = logging.getLogger(__name__)
 class CLIPEmbedder:
     """
     CLIP modeli ile fotoğraf ve metin embedding'leri üretir.
-    Fotoğrafları anlamsal sayılara (512 boyutlu vektörler) dönüştürür.
+    Görsel encode: clip-ViT-B-32 (orijinal CLIP)
+    Metin encode: clip-ViT-B-32-multilingual-v1 (68 dil destekli)
+    Her iki model de aynı 512 boyutlu uzaya iz düşürür.
     """
-    
-    def __init__(self, model_name: str = Config.CLIP_MODEL_NAME,
+
+    def __init__(self, image_model: str = Config.CLIP_IMAGE_MODEL,
+                 text_model: str = Config.CLIP_TEXT_MODEL,
                  encryption_manager: EncryptionManager = None,
                  batch_size: int = Config.CLIP_BATCH_SIZE):
-        """
-        Args:
-            model_name: CLIP model adı (512 boyut için ViT-B-32 idealdir)
-            encryption_manager: Şifreli dosyaları çözmek için
-            batch_size: Toplu işlem boyutu
-        """
-        self.model_name = model_name
-        self.model = None
+        self.image_model_name = image_model
+        self.text_model_name = text_model
+        self.image_model = None
+        self.text_model = None
         self.batch_size = batch_size
         self.encryptor = encryption_manager or EncryptionManager()
-        # Cihazı belirle: GPU varsa CUDA, yoksa CPU
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-    
-    def load_model(self):
-        """CLIP modelini ihtiyaç duyulduğunda belleğe yükler."""
-        if self.model is None:
-            logger.info(f"CLIP modeli yükleniyor: {self.model_name} ({self.device})...")
-            # SentenceTransformer, görsel ve metinsel CLIP işlemlerini tek çatı altında toplar.
-            self.model = SentenceTransformer(self.model_name, device=self.device)
+
+    def _load_image_model(self):
+        """Görsel CLIP modelini ihtiyaç duyulduğunda yükler."""
+        if self.image_model is None:
+            logger.info(f"CLIP gorsel modeli yukleniyor: {self.image_model_name} ({self.device})...")
+            self.image_model = SentenceTransformer(self.image_model_name, device=self.device)
+
+    def _load_text_model(self):
+        """Multilingual metin modelini ihtiyaç duyulduğunda yükler."""
+        if self.text_model is None:
+            logger.info(f"CLIP metin modeli yukleniyor: {self.text_model_name} ({self.device})...")
+            self.text_model = SentenceTransformer(self.text_model_name, device=self.device)
     
     def _open_image(self, image_path: Path) -> Optional[Image.Image]:
         """Fotoğrafı açar. Şifreliyse önce çözer, değilse direkt açar."""
@@ -62,14 +65,13 @@ class CLIPEmbedder:
         if not image_path.exists():
             return None
 
-        self.load_model()
+        self._load_image_model()
 
         try:
             img = self._open_image(image_path)
             if img is None:
                 return None
-            # normalize_embeddings=True: FAISS araması için vektör boyunu 1'e eşitler.
-            embedding = self.model.encode(
+            embedding = self.image_model.encode(
                 img,
                 convert_to_numpy=True,
                 normalize_embeddings=True
@@ -78,7 +80,7 @@ class CLIPEmbedder:
         except Exception as e:
             logger.error(f"Fotoğraf vektöre çevrilemedi ({image_path.name}) -> {e}")
             return None
-    
+
     def encode_images_batch(self, image_paths: List[Path]) -> np.ndarray:
         """
         Birden fazla fotoğraf için toplu (batch) embedding üretir.
@@ -86,11 +88,11 @@ class CLIPEmbedder:
         if not image_paths:
             return np.array([], dtype='float32')
 
-        self.load_model()
-        
+        self._load_image_model()
+
         try:
             images = [img for p in image_paths if p.exists() for img in [self._open_image(p)] if img is not None]
-            embeddings = self.model.encode(
+            embeddings = self.image_model.encode(
                 images,
                 batch_size=self.batch_size,
                 show_progress_bar=True,
@@ -101,30 +103,29 @@ class CLIPEmbedder:
         except Exception as e:
             logger.error(f"Toplu fotoğraf işleme başarısız -> {e}")
             return np.array([], dtype='float32')
-    
+
     def encode_text(self, text: str) -> Optional[np.ndarray]:
         """
-        Arama metni için embedding üretir. Bu sayede "mavi araba" yazarak 
-        ilgili fotoğrafları bulabilirsin.
+        Arama metni için embedding üretir (multilingual — 68 dil destekli).
+        Türkçe, İngilizce ve diğer dillerde arama yapılabilir.
         """
         if not text:
             return None
-            
-        self.load_model()
-        
+
+        self._load_text_model()
+
         try:
-            # CLIP'in metin kodlayıcısını kullanarak metni görsel uzaya iz düşürür.
-            embedding = self.model.encode(
-                text, 
-                convert_to_numpy=True, 
+            embedding = self.text_model.encode(
+                text,
+                convert_to_numpy=True,
                 normalize_embeddings=True
             )
             return embedding.astype('float32')
         except Exception as e:
             logger.error(f"Metin vektöre çevrilemedi -> {e}")
             return None
-    
+
     def get_embedding_dimension(self) -> int:
         """Kullanılan modelin boyutunu döndürür (Standart: 512)."""
-        self.load_model()
-        return self.model.get_sentence_embedding_dimension()
+        self._load_image_model()
+        return self.image_model.get_sentence_embedding_dimension()

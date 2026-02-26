@@ -1,13 +1,15 @@
-/// Olay detay ekrani.
-/// Tekil olayin tum fotograflari, ozeti ve flashcard'lari.
-///
-/// API Cagrilari:
-///   GET /api/events/{id}
-///
-/// Cascade Delete Uyarisi:
-///   Event silindiginde altindaki tum Item'lar, Flashcard'lar
-///   ve ReviewLog'lar da silinir. Cift onay gerektirir.
+import 'package:flutter/material.dart';
 
-class EventDetailScreen {
-  // Widget build(BuildContext context)
+/// Olay detay ekrani — Phase 4'te doldurulacak.
+class EventDetailScreen extends StatelessWidget {
+  final String id;
+  const EventDetailScreen({super.key, required this.id});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Olay #$id')),
+      body: Center(child: Text('Olay detay sayfasi — event $id')),
+    );
+  }
 }

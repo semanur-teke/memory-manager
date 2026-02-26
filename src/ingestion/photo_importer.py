@@ -1,8 +1,12 @@
 import os
+import logging
 from pathlib import Path
 from typing import List, Optional, Dict
 from datetime import datetime
 from sqlalchemy.orm import Session
+from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 # 1. Veritabanı ve Güvenlik Modülleri (Kök dizinden)
 from database.schema import Item
@@ -18,13 +22,15 @@ class PhotoImporter:
     """
     Fotoğrafları toplu olarak içe aktarır, işler ve güvenli şekilde saklar[cite: 28].
     """
-    
-    def __init__(self, db_session: Session):
+
+    def __init__(self, db_session: Session, clip_embedder=None, faiss_manager=None):
         self.db = db_session
         self.exif_extractor = EXIFExtractor()
         self.processor = ImageProcessor()
         self.privacy = PrivacyManager(db_session)
         self.encryption = EncryptionManager()
+        self.clip_embedder = clip_embedder
+        self.faiss_manager = faiss_manager
         self.supported_formats = Config.SUPPORTED_IMAGE_FORMATS
 
     def find_image_files(self, folder_path: Path, recursive: bool = True) -> List[Path]:
@@ -46,7 +52,7 @@ class PhotoImporter:
                 file_path=str(image_path),
                 file_hash=metadata["file_hash"],
                 type="Photo",
-                creation_datetime=metadata["created_at"] or datetime.now(),
+                creation_datetime=metadata["created_at"] or datetime.fromtimestamp(os.path.getmtime(str(image_path))),
                 latitude=metadata.get("location_lat"),
                 longitude=metadata.get("location_lng"),
                 has_consent=has_consent, # Gizlilik bayrağı [cite: 16]
@@ -55,7 +61,8 @@ class PhotoImporter:
             self.db.add(new_item)
             self.db.commit()
             return new_item.item_id
-        except Exception:
+        except Exception as e:
+            logger.error(f"Veritabanına kayıt hatası ({image_path}): {e}")
             self.db.rollback()
             return None
 
@@ -78,6 +85,20 @@ class PhotoImporter:
         if self.is_duplicate(file_hash):
             return 'duplicate'
 
+        # 2b. file_path bazlı duplicate kontrolü (aynı dosya şifrelendiyse hash değişir)
+        existing = self.db.query(Item).filter(Item.file_path == str(image_path)).first()
+        if existing:
+            logger.info(f"Dosya zaten DB'de kayıtlı (path): {image_path}")
+            return 'duplicate'
+
+        # 2c. Dosyanın gerçek bir görüntü olduğunu doğrula (şifreli dosyaları atla)
+        try:
+            with Image.open(image_path) as img:
+                img.verify()
+        except Exception:
+            logger.warning(f"Geçerli görüntü dosyası değil, atlanıyor: {image_path}")
+            return 'duplicate'
+
         try:
             # 3. EXIF & Metadata çıkarma
             metadata = self.exif_extractor.extract_metadata(image_path)
@@ -86,14 +107,42 @@ class PhotoImporter:
             # 4. Image Processing: Yön düzeltme ve boyutlandırma
             rotation_success = self.processor.process_image(image_path)
 
-            # 5. Encryption: Dosyayı diskte şifrele
+            # 5. CLIP Embedding: Raw image'den vektör üret (şifrelemeden ÖNCE)
+            embedding = None
+            if self.clip_embedder is not None:
+                try:
+                    embedding = self.clip_embedder.encode_image(image_path)
+                    if embedding is not None:
+                        logger.info(f"CLIP embedding uretildi: {image_path.name}")
+                    else:
+                        logger.warning(f"CLIP embedding uretilemedi: {image_path.name}")
+                except Exception as e:
+                    logger.warning(f"CLIP embedding hatasi ({image_path.name}): {e}")
+
+            # 6. Encryption: Dosyayı diskte şifrele
             self.encryption.encrypt_file(str(image_path))
 
-            # 6. Database: Kaydı tamamla
-            if self.add_photo_to_database(image_path, metadata, user_consent, rotation_success) is not None:
-                return 'imported'
-            return 'error'
-        except Exception:
+            # 7. Database: Kaydı tamamla
+            item_id = self.add_photo_to_database(image_path, metadata, user_consent, rotation_success)
+            if item_id is None:
+                return 'error'
+
+            # 8. FAISS'e embedding ekle ve faiss_index_id güncelle
+            if embedding is not None and self.faiss_manager is not None:
+                try:
+                    faiss_ids = self.faiss_manager.add_embeddings(embedding, [item_id])
+                    if faiss_ids:
+                        item = self.db.query(Item).filter(Item.item_id == item_id).first()
+                        if item:
+                            item.faiss_index_id = faiss_ids[0]
+                            self.db.commit()
+                            logger.info(f"FAISS index guncellendi: item {item_id} -> faiss_id {faiss_ids[0]}")
+                except Exception as e:
+                    logger.warning(f"FAISS ekleme hatasi (item {item_id}): {e}")
+
+            return 'imported'
+        except Exception as e:
+            logger.error(f"Fotoğraf import hatası ({image_path}): {e}")
             return 'error'
 
     def import_folder(self, folder_path: str, user_consent: bool, recursive: bool = True) -> Dict:

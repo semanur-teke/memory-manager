@@ -39,7 +39,10 @@ secret.key
 *.db
 *.db-journal
 *.faiss
+*.pkl
 database/*.db
+database/*.faiss
+database/*.pkl
 
 # --- Veri Klasörleri ---
 # Ham ve işlenmiş veriler yerel diskte kalmalı
@@ -64,6 +67,13 @@ models/**/*.ckpt
 *.log
 privacy_audit.log
 
+# --- Flutter Build ---
+flutter_app/build/
+flutter_app/.dart_tool/
+flutter_app/.flutter-plugins
+flutter_app/.flutter-plugins-dependencies
+flutter_app/.packages
+
 # --- IDE ve İşletim Sistemi ---
 .vscode/
 .idea/
@@ -80,6 +90,7 @@ TECHNICAL_ORIENTATION.md
 UI_GUIDELINE.md
 test_data
 UI_TEKNIK_ACIKLAMA.md
+BUGFIX_LOG.md
 
 # --- Test Çıktıları ---
 test_results.xml
