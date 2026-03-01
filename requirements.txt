@@ -7,7 +7,7 @@ Pillow>=10.0.0
 exifread>=3.0.0
 
 # Audio processing
-whisper>=1.1.0
+openai-whisper
 torch==2.10.0
 torchaudio==2.10.0
 
