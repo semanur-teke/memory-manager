@@ -9,7 +9,7 @@ import 'package:dio/dio.dart';
 /// ```
 class ApiClient {
   static const String defaultBaseUrl = 'http://localhost:8000';
-  static const Duration defaultTimeout = Duration(seconds: 30);
+  static const Duration defaultTimeout = Duration(minutes: 5);
 
   final Dio _dio;
 
