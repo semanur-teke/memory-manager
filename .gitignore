@@ -103,3 +103,27 @@ database\test_index.pkl
 ~$*.xlsx
 .claude/
 .claude/**
+
+# Flutter
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ML / models (istersen)
+*.pdb
+*.dll
+
